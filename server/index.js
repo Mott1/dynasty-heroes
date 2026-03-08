@@ -397,6 +397,79 @@ function handleError(err, res) {
                || 'Unknown error';
 
   console.error(`API Error [${status}]:`, message);
+  // ─── ALL-TIME HISTORY ─────────────────────────────────────────────────────────
+  app.get('/api/history', async (req, res) => {
+      try {
+            const userData = await yahooGet(req, '/users;use_login=1/games;game_keys=mlb/leagues');
+            const gamesArr = userData?.fantasy_content?.users?.[0]?.user?.[1]?.games;
+            if (!gamesArr) return res.status(500).json({ error: 'Could not fetch user leagues' });
+            const leagueKeys = [];
+            const count = gamesArr.count || 0;
+            for (let i = 0; i < count; i++) {
+                    const game = gamesArr[i]?.game;
+                    if (!game) continue;
+                    const gameInfo = Array.isArray(game) ? game[0] : game;
+                    const leaguesData = Array.isArray(game) ? game[1]?.leagues : null;
+                    if (!leaguesData) continue;
+                    const lc = leaguesData.count || 0;
+                    for (let j = 0; j < lc; j++) {
+                              const league = leaguesData[j]?.league;
+                              if (!league) continue;
+                              const info = Array.isArray(league) ? league[0] : league;
+                              if (info.name === 'Dynasty Heroes') {
+                                          leagueKeys.push({ key: info.league_key, season: info.season || gameInfo.season });
+                              }
+                    }
+            }
+            if (leagueKeys.length === 0) return res.status(404).json({ error: 'No historical leagues found' });
+            const historyByYear = [];
+            for (const { key, season } of leagueKeys) {
+                    try {
+                              const data = await yahooGet(req, `/league/${key}/standings`);
+                              const leagueArr = data?.fantasy_content?.league;
+                              if (!leagueArr) continue;
+                              const teams = leagueArr[1]?.standings?.[0]?.teams;
+                              if (!teams) continue;
+                              const tc = teams.count || 0;
+                              const yearTeams = [];
+                              for (let i = 0; i < tc; i++) {
+                                          const team = teams[i]?.team;
+                                          if (!team) continue;
+                                          const info = team[0];
+                                          const standings = team[2]?.team_standings;
+                                          const teamArr = Array.isArray(info) ? info : [info];
+                                          const nameObj = teamArr.find(x => x?.name);
+                                          const logoArr = teamArr.find(x => Array.isArray(x?.team_logos));
+                                          const managerObj = teamArr.find(x => x?.managers);
+                                          yearTeams.push({
+                                                        name: nameObj?.name || 'Unknown',
+                                                        logo: logoArr?.team_logos?.[0]?.team_logo?.url || null,
+                                                        manager: managerObj?.managers?.[0]?.manager?.nickname || '',
+                                                        rank: parseInt(standings?.rank) || 99,
+                                                        wins: parseInt(standings?.outcome_totals?.wins) || 0,
+                                                        losses: parseInt(standings?.outcome_totals?.losses) || 0,
+                                                        ties: parseInt(standings?.outcome_totals?.ties) || 0,
+                                                        pct: parseFloat(standings?.outcome_totals?.percentage) || 0,
+                                          });
+                              }
+                              yearTeams.sort((a, b) => a.rank - b.rank);
+                              historyByYear.push({ season: parseInt(season), leagueKey: key, teams: yearTeams });
+                    } catch (e) { console.error(`Failed standings for ${key}:`, e.message); }
+            }
+            historyByYear.sort((a, b) => b.season - a.season);
+            res.json({ seasons: historyByYear });
+      } catch (err) { handleError(err, res); }
+  });
+  
+  // ─── RAW PROXY ────────────────────────────────────────────────────────────────
+  app.get('/api/raw', async (req, res) => {
+      try {
+            const p = req.query.path;
+            if (!p) return res.status(400).json({ error: 'path required' });
+            res.json(await yahooGet(req, p));
+      } catch (err) { handleError(err, res); }
+  });
+  
   res.status(status).json({ error: 'api_error', message: String(message) });
 }
 
