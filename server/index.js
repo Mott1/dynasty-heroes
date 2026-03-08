@@ -166,6 +166,65 @@ app.get('/api/history', async (req, res) => {
   } catch(err) { handleError(err, res); }
 });
 
+
+// ─── TEAM ROSTER ─────────────────────────────────────────────────────────────
+app.get('/api/teams/:teamId/roster', async (req, res) => {
+    try {
+          const { teamId } = req.params;
+          const teamKey = `${LEAGUE_KEY}.t.${teamId}`;
+          const data = await yahooGet(req, `/team/${teamKey}/roster;out=players`);
+          const teamData = data?.fantasy_content?.team;
+          if (!teamData) return res.status(404).json({ error: 'Team not found' });
+          const teamInfo = Array.isArray(teamData[0]) ? teamData[0] : [teamData[0]];
+          const teamName = teamInfo.find(x => x?.name)?.name || `Team ${teamId}`;
+          const rosterData = teamData[1]?.roster;
+          const playersData = rosterData?.['0']?.players;
+          const players = [];
+          if (playersData) {
+                  const count = playersData.count || 0;
+                  for (let i = 0; i < count; i++) {
+                            const player = playersData[i]?.player;
+                            if (!player) continue;
+                            const pinfo = Array.isArray(player[0]) ? player[0] : [player[0]];
+                            const nameObj = pinfo.find(x => x?.full_name || x?.name);
+                            const posObj = pinfo.find(x => Array.isArray(x?.eligible_positions));
+                            const name = nameObj?.full_name || nameObj?.name?.full || 'Unknown';
+                            const eligible = posObj?.eligible_positions?.map(p => p?.position).filter(Boolean) || [];
+                            players.push({ name, eligible_positions: eligible });
+                  }
+          }
+          res.json({ team_id: teamId, team_name: teamName, players });
+    } catch (err) { handleError(err, res); }
+});
+
+// ─── CLAUDE PROXY (avoids CORS) ───────────────────────────────────────────────
+app.post('/api/claude', async (req, res) => {
+    if (!req.session.tokens) return res.status(401).json({ error: 'Not authenticated' });
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
+    try {
+          const response = await axios.post(
+                  'https://api.anthropic.com/v1/messages',
+                  req.body,
+            {
+                      headers: {
+                                  'x-api-key': process.env.ANTHROPIC_API_KEY,
+                                  'anthropic-version': '2023-06-01',
+                                  'content-type': 'application/json',
+                      },
+                      responseType: req.body.stream ? 'stream' : 'json',
+            }
+                );
+          if (req.body.stream) {
+                  res.setHeader('Content-Type', 'text/event-stream');
+                  res.setHeader('Cache-Control', 'no-cache');
+                  response.data.pipe(res);
+          } else {
+                  res.json(response.data);
+          }
+    } catch (err) {
+          res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
+    }
+});
 app.get('/api/raw', async (req, res) => { try { const p=req.query.path; if(!p) return res.status(400).json({error:'path required'}); res.json(await yahooGet(req,p)); } catch(err){handleError(err,res);} });
 app.get('*', (_req, res) => { res.sendFile(path.join(__dirname, '../public/index.html')); });
 app.listen(PORT, () => { console.log('Dynasty Heroes running on port ' + PORT); });
