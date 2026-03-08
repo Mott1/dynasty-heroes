@@ -782,26 +782,50 @@ async function callClaude(prompt, outputEl, btnEl, stream=true) {
   try {
     const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1400, stream, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1400, stream, tools:[{type:'web_search_20250305',name:'web_search'}], messages:[{role:'user',content:prompt}] })
     });
     if (stream) {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let full = '';
+      let isSearching = false;
       const card = document.createElement('div');
       card.className = 'card';
-      card.innerHTML = `<div class="card-header"><span class="card-label">Analysis</span></div><div class="card-body"></div>`;
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="card-label">Analysis</span>
+          <span class="search-status" style="display:none;font-size:11px;font-weight:600;color:var(--cyan);display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--cyan);border-top-color:transparent;animation:spin .6s linear infinite;display:inline-block"></span>
+            Searching the web…
+          </span>
+        </div>
+        <div class="card-body"></div>`;
       outputEl.innerHTML = '';
       outputEl.appendChild(card);
       const body = card.querySelector('.card-body');
+      const searchStatus = card.querySelector('.search-status');
       while(true) {
         const {done,value} = await reader.read(); if(done) break;
         for(const line of dec.decode(value).split('\n')) {
           if(!line.startsWith('data: ')) continue;
           const d = line.slice(6); if(d==='[DONE]') break;
-          try { const j=JSON.parse(d); if(j.delta?.text){full+=j.delta.text; body.innerHTML=md(full);} } catch{}
+          try {
+            const j = JSON.parse(d);
+            // Show/hide searching indicator based on tool use
+            if(j.type === 'content_block_start' && j.content_block?.type === 'tool_use') {
+              searchStatus.style.display = 'flex';
+            }
+            if(j.type === 'content_block_start' && j.content_block?.type === 'text') {
+              searchStatus.style.display = 'none';
+            }
+            // Only accumulate text deltas — ignore tool input deltas
+            if(j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+              full += j.delta.text; body.innerHTML = md(full);
+            }
+          } catch{}
         }
       }
+      searchStatus.style.display = 'none';
       return full;
     } else {
       const data = await res.json();
@@ -857,11 +881,12 @@ async function runOdds() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:700,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
         messages:[{role:'user',content:`Assign championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. Must sum to exactly 100. Return ONLY a JSON object, no markdown, no explanation:\n{"TeamName": number}\n\nROSTERS:\n${summary}`}]
       })
     });
     const data = await res.json();
-    const raw = data.content[0].text.replace(/```json|```/g,'').trim();
+    const raw = (data.content.find(b => b.type === 'text')?.text || '').replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(raw);
     const sorted = Object.entries(parsed).sort((a,b)=>b[1]-a[1]);
     const card = document.createElement('div');
