@@ -1,18 +1,20 @@
 require('dotenv').config();
-const express  = require('express');
-const session  = require('express-session');
-const axios    = require('axios');
-const path     = require('path');
+const express = require('express');
+const session = require('express-session');
+const axios = require('axios');
+const path = require('path');
+const redis = require('redis');
+const RedisStore = require('connect-redis').default;
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-const YAHOO_AUTH_URL  = 'https://api.login.yahoo.com/oauth2/request_auth';
+const YAHOO_AUTH_URL = 'https://api.login.yahoo.com/oauth2/request_auth';
 const YAHOO_TOKEN_URL = 'https://api.login.yahoo.com/oauth2/get_token';
-const YAHOO_API_BASE  = 'https://fantasysports.yahooapis.com/fantasy/v2';
-const LEAGUE_ID       = process.env.LEAGUE_ID    || '10514';
-const MY_TEAM_ID      = process.env.MY_TEAM_ID   || '9';
-const LEAGUE_KEY      = `mlb.l.${LEAGUE_ID}`;
+const YAHOO_API_BASE = 'https://fantasysports.yahooapis.com/fantasy/v2';
+const LEAGUE_ID = process.env.LEAGUE_ID || '10514';
+const MY_TEAM_ID = process.env.MY_TEAM_ID || '9';
+const LEAGUE_KEY = `mlb.l.${LEAGUE_ID}`;
 
 const REQUIRED_ENV = ['YAHOO_CLIENT_ID', 'YAHOO_CLIENT_SECRET', 'YAHOO_REDIRECT_URI', 'SESSION_SECRET'];
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
@@ -20,11 +22,23 @@ if (missing.length) { console.error('Missing env vars:', missing.join(', ')); pr
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// ─── REDIS SESSION STORE ──────────────────────────────────────────────────────
+const redisClient = redis.createClient({ url: process.env.REDIS_URL });
+redisClient.connect().catch(err => console.error('Redis connect error:', err));
+redisClient.on('error', err => console.error('Redis error:', err));
+redisClient.on('connect', () => console.log('✓ Redis connected'));
+
 app.use(session({
+  store: new RedisStore({ client: redisClient }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
 }));
 
 function getBasicAuth() {
@@ -40,7 +54,11 @@ async function refreshTokenIfNeeded(req) {
     const r = await axios.post(YAHOO_TOKEN_URL, params.toString(), {
       headers: { 'Authorization': `Basic ${getBasicAuth()}`, 'Content-Type': 'application/x-www-form-urlencoded' }
     });
-    req.session.tokens = { access_token: r.data.access_token, refresh_token: r.data.refresh_token || refresh_token, expires_at: Date.now() + (r.data.expires_in * 1000) };
+    req.session.tokens = {
+      access_token: r.data.access_token,
+      refresh_token: r.data.refresh_token || refresh_token,
+      expires_at: Date.now() + (r.data.expires_in * 1000)
+    };
     return true;
   } catch (e) { return false; }
 }
@@ -58,7 +76,7 @@ function handleError(err, res) {
   res.status(500).json({ error: 'Yahoo API error', details: err.response?.data || err.message });
 }
 
-// OAuth
+// ─── OAUTH ────────────────────────────────────────────────────────────────────
 app.get('/auth/login', (req, res) => {
   const params = new URLSearchParams({ client_id: process.env.YAHOO_CLIENT_ID, redirect_uri: process.env.YAHOO_REDIRECT_URI, response_type: 'code', language: 'en-us' });
   res.redirect(`${YAHOO_AUTH_URL}?${params}`);
@@ -69,8 +87,14 @@ app.get('/auth/callback', async (req, res) => {
   if (!code) return res.redirect('/?error=no_code');
   try {
     const params = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: process.env.YAHOO_REDIRECT_URI });
-    const r = await axios.post(YAHOO_TOKEN_URL, params.toString(), { headers: { 'Authorization': `Basic ${getBasicAuth()}`, 'Content-Type': 'application/x-www-form-urlencoded' } });
-    req.session.tokens = { access_token: r.data.access_token, refresh_token: r.data.refresh_token, expires_at: Date.now() + (r.data.expires_in * 1000) };
+    const r = await axios.post(YAHOO_TOKEN_URL, params.toString(), {
+      headers: { 'Authorization': `Basic ${getBasicAuth()}`, 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    req.session.tokens = {
+      access_token: r.data.access_token,
+      refresh_token: r.data.refresh_token,
+      expires_at: Date.now() + (r.data.expires_in * 1000)
+    };
     res.redirect('/');
   } catch (e) { res.redirect('/?error=auth_failed'); }
 });
@@ -87,7 +111,6 @@ app.get('/api/history', async (req, res) => {
     const userData = await yahooGet(req, '/users;use_login=1/games;game_keys=mlb/leagues');
     const gamesArr = userData?.fantasy_content?.users?.[0]?.user?.[1]?.games;
     if (!gamesArr) return res.status(500).json({ error: 'Could not fetch user leagues' });
-
     const leagueKeys = [];
     const count = gamesArr.count || 0;
     for (let i = 0; i < count; i++) {
@@ -106,11 +129,7 @@ app.get('/api/history', async (req, res) => {
         }
       }
     }
-
-    if (leagueKeys.length === 0) {
-      return res.status(404).json({ error: 'No historical leagues found' });
-    }
-
+    if (leagueKeys.length === 0) return res.status(404).json({ error: 'No historical leagues found' });
     const historyByYear = [];
     for (const { key, season } of leagueKeys) {
       try {
@@ -143,16 +162,11 @@ app.get('/api/history', async (req, res) => {
         }
         yearTeams.sort((a, b) => a.rank - b.rank);
         historyByYear.push({ season: parseInt(season), leagueKey: key, teams: yearTeams });
-      } catch (e) {
-        console.error(`Failed standings for ${key}:`, e.message);
-      }
+      } catch (e) { console.error(`Failed standings for ${key}:`, e.message); }
     }
-
     historyByYear.sort((a, b) => b.season - a.season);
     res.json({ seasons: historyByYear });
-  } catch (err) {
-    handleError(err, res);
-  }
+  } catch (err) { handleError(err, res); }
 });
 
 // ─── RAW PROXY ────────────────────────────────────────────────────────────────
@@ -185,14 +199,10 @@ app.get('/api/league', async (req, res) => {
           team_id: teamArr.find(x => x?.team_id)?.team_id,
           name: teamArr.find(x => x?.name)?.name,
           logo: teamArr.find(x => Array.isArray(x?.team_logos))?.team_logos?.[0]?.team_logo?.url,
-          rank: standings?.rank,
-          wins: standings?.outcome_totals?.wins,
-          losses: standings?.outcome_totals?.losses,
-          ties: standings?.outcome_totals?.ties,
-          pct: standings?.outcome_totals?.percentage,
-          streak: standings?.streak,
-          moves: standings?.moves,
-          waiver_priority: standings?.waiver_priority
+          rank: standings?.rank, wins: standings?.outcome_totals?.wins,
+          losses: standings?.outcome_totals?.losses, ties: standings?.outcome_totals?.ties,
+          pct: standings?.outcome_totals?.percentage, streak: standings?.streak,
+          moves: standings?.moves, waiver_priority: standings?.waiver_priority
         });
       }
     }
@@ -219,12 +229,7 @@ app.get('/api/scoreboard', async (req, res) => {
         const team = teams[j]?.team;
         if (!team) continue;
         const info = Array.isArray(team[0]) ? team[0] : [team[0]];
-        matchupTeams.push({
-          name: info.find(x => x?.name)?.name,
-          logo: info.find(x => Array.isArray(x?.team_logos))?.team_logos?.[0]?.team_logo?.url,
-          points: team[1]?.team_points?.total || 0,
-          projected: team[1]?.team_projected_points?.total || 0
-        });
+        matchupTeams.push({ name: info.find(x => x?.name)?.name, logo: info.find(x => Array.isArray(x?.team_logos))?.team_logos?.[0]?.team_logo?.url, points: team[1]?.team_points?.total || 0, projected: team[1]?.team_projected_points?.total || 0 });
       }
       result.push({ week: matchup.week, status: matchup.status, teams: matchupTeams });
     }
@@ -261,7 +266,7 @@ app.get('/api/transactions', async (req, res) => {
   } catch (err) { handleError(err, res); }
 });
 
-// ─── TEAM ROSTER ─────────────────────────────────────────────────────────────
+// ─── TEAM ROSTER ──────────────────────────────────────────────────────────────
 app.get('/api/teams/:teamId/roster', async (req, res) => {
   try {
     const { teamId } = req.params;
@@ -293,7 +298,7 @@ app.get('/api/teams/:teamId/roster', async (req, res) => {
   } catch (err) { handleError(err, res); }
 });
 
-// ─── CLAUDE PROXY (avoids CORS) ───────────────────────────────────────────────
+// ─── CLAUDE PROXY ─────────────────────────────────────────────────────────────
 app.post('/api/claude', async (req, res) => {
   if (!req.session.tokens) return res.status(401).json({ error: 'Not authenticated' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
@@ -302,11 +307,7 @@ app.post('/api/claude', async (req, res) => {
       'https://api.anthropic.com/v1/messages',
       req.body,
       {
-        headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
+        headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         responseType: req.body.stream ? 'stream' : 'json',
       }
     );
@@ -323,5 +324,4 @@ app.post('/api/claude', async (req, res) => {
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
-
-app.listen(PORT, () => console.log(`\n✓  Dynasty Heroes running on port ${PORT}\n`));
+app.listen(PORT, () => console.log(`\n✓ Dynasty Heroes running on port ${PORT}\n`));
