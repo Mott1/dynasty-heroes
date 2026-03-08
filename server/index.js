@@ -13,6 +13,7 @@ const YAHOO_API_BASE  = 'https://fantasysports.yahooapis.com/fantasy/v2';
 const LEAGUE_ID       = process.env.LEAGUE_ID  || '10514';
 const MY_TEAM_ID      = process.env.MY_TEAM_ID || '9';
 const LEAGUE_KEY      = `mlb.l.${LEAGUE_ID}`;
+const MLB_GAME_KEYS   = '357,370,378,388,398,404,412,422,431,458,469';
 
 const REQUIRED_ENV = ['YAHOO_CLIENT_ID', 'YAHOO_CLIENT_SECRET', 'YAHOO_REDIRECT_URI', 'SESSION_SECRET'];
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
@@ -38,7 +39,7 @@ async function getAccessToken(req) {
 async function yahooGet(req, urlPath) {
   const token = await getAccessToken(req);
   const url = YAHOO_API_BASE + urlPath + (urlPath.includes('?') ? '&' : '?') + 'format=json';
-  const res = await axios.get(url, { headers: { Authorization: 'Bearer ' + token }, timeout: 15000 });
+  const res = await axios.get(url, { headers: { Authorization: 'Bearer ' + token }, timeout: 20000 });
   return res.data;
 }
 function handleError(err, res) {
@@ -118,9 +119,9 @@ app.get('/api/teams/:teamId/roster', async (req, res) => {
 
 app.get('/api/history', async (req, res) => {
   try {
-    const userData = await yahooGet(req, '/users;use_login=1/games;game_keys=mlb/leagues');
-    const gamesRaw = userData?.fantasy_content?.users?.[0]?.user?.[1]?.games;
-    if (!gamesRaw) return res.status(500).json({ error: 'Could not fetch user game history' });
+    const data = await yahooGet(req, `/users;use_login=1/games;game_keys=${MLB_GAME_KEYS}/leagues`);
+    const gamesRaw = data?.fantasy_content?.users?.[0]?.user?.[1]?.games;
+    if (!gamesRaw) return res.status(500).json({ error: 'Could not fetch game history' });
     const leagueKeys = [];
     const gameCount = gamesRaw.count || 0;
     for (let i = 0; i < gameCount; i++) {
@@ -143,24 +144,24 @@ app.get('/api/history', async (req, res) => {
     const seasons = [];
     for (const { key, season } of leagueKeys) {
       try {
-        const data = await yahooGet(req, `/league/${key}/standings`);
-        const leagueArr = data?.fantasy_content?.league;
+        const d = await yahooGet(req, `/league/${key}/standings`);
+        const leagueArr = d?.fantasy_content?.league;
         if (!leagueArr) continue;
         const teamsRaw = leagueArr[1]?.standings?.[0]?.teams;
         if (!teamsRaw) continue;
-        const tc = teamsRaw.count || 0, teams = [];
-        for (let i = 0; i < tc; i++) {
+        const teams = [];
+        for (let i = 0; i < (teamsRaw.count || 0); i++) {
           const teamArr = teamsRaw[i]?.team;
           if (!Array.isArray(teamArr)) continue;
           const infoArr = teamArr[0], standing = teamArr[2]?.team_standings;
           const get = k => Array.isArray(infoArr) ? infoArr.find(x => x?.[k] !== undefined)?.[k] : null;
           teams.push({ name: get('name')||'Unknown', logo: get('team_logos')?.[0]?.team_logo?.url||null, manager: get('managers')?.[0]?.manager?.nickname||'', team_id: get('team_id'), rank: parseInt(standing?.rank)||99, wins: parseInt(standing?.outcome_totals?.wins)||0, losses: parseInt(standing?.outcome_totals?.losses)||0, ties: parseInt(standing?.outcome_totals?.ties)||0, pct: parseFloat(standing?.outcome_totals?.percentage)||0 });
         }
-        teams.sort((a,b) => a.rank - b.rank);
+        teams.sort((a, b) => a.rank - b.rank);
         seasons.push({ season: parseInt(season), leagueKey: key, teams });
-      } catch(e) { console.error(`Failed standings for ${key}:`, e.message); }
+      } catch(e) { console.error(`Standings failed ${key}:`, e.message); }
     }
-    seasons.sort((a,b) => b.season - a.season);
+    seasons.sort((a, b) => b.season - a.season);
     res.json({ seasons });
   } catch(err) { handleError(err, res); }
 });
