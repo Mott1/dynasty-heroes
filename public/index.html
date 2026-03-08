@@ -1,132 +1,482 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynasty Heroes ⚾</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynasty Heroes — 2026 Prediction Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--bg2:#0d0d0d;--bg3:#111;--bg4:#1a1a1a;
+  --border:#1e1e1e;--border2:#2a2a2a;
+  --text:#e0e0e0;--text2:#b0b0b0;--text3:#666;--text4:#444;
+  --green:#00ff88;--green-d:#00cc6a;--green-bg:rgba(0,255,136,0.07);
+  --red:#ef4444;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+button{font-family:inherit;cursor:pointer}
+select{font-family:inherit}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:24px 40px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.back-btn{font-size:13px;color:var(--text3);background:none;border:1px solid var(--border2);padding:6px 14px;border-radius:8px;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.back-btn:hover{color:var(--text)}
+.header-badge{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green);background:var(--green-bg);border:1px solid rgba(0,255,136,.15);padding:4px 12px;border-radius:100px}
+.header-title{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-.04em;color:#fff;margin-bottom:4px;line-height:1}
+.header-title span{color:var(--green)}
+.header-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:13px;font-weight:400;white-space:nowrap;transition:all .15s}
+.tab:hover{color:var(--text2)}
+.tab.active{border-bottom-color:var(--green);color:#fff;font-weight:600}
+.main{max-width:880px;margin:0 auto;padding:36px 40px}
+.panel{display:none;animation:fadeUp .3s ease}
+.panel.active{display:block}
+.intro{font-size:14px;color:var(--text3);margin-bottom:24px;line-height:1.7}
+.btn-primary{background:linear-gradient(135deg,var(--green),var(--green-d));color:#000;border:none;padding:11px 24px;border-radius:9px;font-weight:700;font-size:14px;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,255,136,.25)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--bg4);color:var(--text2);border:1px solid var(--border2);padding:10px 20px;border-radius:9px;font-weight:500;font-size:13px;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-secondary:hover{border-color:#444;color:var(--text)}
+.spinner-wrap{display:flex;align-items:center;gap:10px;color:var(--text3);padding:24px 0;font-size:14px}
+.spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:16px}
+.loading-screen .spinner{width:28px;height:28px;border-width:3px}
+.loading-screen p{color:var(--text3);font-size:14px}
+.error-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:12px;color:var(--red);font-size:14px}
+.roster-status{font-size:11px;color:var(--text3);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.roster-status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.stream-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:80px;font-family:'DM Mono',monospace;font-size:13px;line-height:1.9;color:var(--text2)}
+.stream-box .h1{color:#fff;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;border-bottom:1px solid var(--border);padding-bottom:8px;margin:20px 0 10px;letter-spacing:-.02em}
+.stream-box .h1:first-child{margin-top:0}
+.stream-box .h2{color:var(--green);font-weight:700;font-size:14px;margin:16px 0 6px;font-family:'DM Sans',sans-serif}
+.stream-box .bold{color:#fff;font-weight:600;font-family:'DM Sans',sans-serif}
+.stream-box .li{color:var(--text2);padding-left:16px;margin-bottom:3px}
+.stream-box .num{color:#e2e8f0;padding-left:4px;margin-bottom:5px;font-family:'DM Sans',sans-serif}
+.stream-box .plain{color:#c0c0c0;margin-bottom:2px}
+.odds-list{display:flex;flex-direction:column;gap:8px}
+.odds-row{display:flex;align-items:center;gap:12px;padding:11px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px}
+.odds-row.top3{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.03)}
+.odds-rank{font-family:'DM Mono',monospace;font-weight:700;font-size:13px;width:26px;flex-shrink:0}
+.odds-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.odds-name{flex:1;font-size:14px;font-weight:500}
+.odds-track{flex:2;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;max-width:180px}
+.odds-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.34,1.2,.64,1)}
+.odds-pct{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;min-width:44px;text-align:right;flex-shrink:0}
+.team-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.team-pill{font-size:12px;font-weight:500;padding:5px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);transition:all .15s}
+.team-pill:hover{color:var(--text2);border-color:#444}
+.team-pill.active{color:#fff;border-color:currentColor;background:rgba(255,255,255,.06)}
+.scout-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:16px 20px;background:var(--bg4);border-radius:10px}
+.scout-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px}
+.scout-dot{width:12px;height:12px;border-radius:50%}
+.matchup-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;margin-bottom:20px}
+.vs-label{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text4);text-align:center;padding-bottom:6px}
+.select-wrap label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);display:block;margin-bottom:6px}
+select.team-select{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:9px;font-size:14px;appearance:none;cursor:pointer;outline:none}
+.matchup-banners{display:flex;gap:10px;margin-bottom:16px}
+.mb{flex:1;padding:10px 14px;background:var(--bg4);border-radius:8px;border:1px solid var(--border)}
+.mb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
+.mb-name{font-size:13px;font-weight:600;color:var(--text)}
+@media(max-width:680px){
+  .header{padding:20px 20px 0}
+  .main{padding:28px 20px}
+  .header-title{font-size:24px}
+  .matchup-grid{grid-template-columns:1fr;gap:8px}
+  .vs-label{display:none}
+  .odds-track{display:none}
+}
+</style>
 </head>
 <body>
 
-  <!-- ══════════════════════════════════════
-       LOGIN SCREEN
-  ══════════════════════════════════════ -->
-  <div id="screen-login" class="screen" style="display:none">
-    <div class="login-glow"></div>
-    <div class="login-stripes"></div>
-    <div class="login-card">
-      <div class="login-eyebrow">⚾ Yahoo Fantasy Baseball · ID# 10514</div>
-      <h1 class="login-title">Dynasty<br><em>Heroes</em></h1>
-      <p class="login-desc">Live standings, matchups &amp; transactions for your 18-team dynasty league.</p>
-      <a href="/auth/login" class="btn-sign-in">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M6 9h6M9 6l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Sign in with Yahoo
-      </a>
-      <p id="login-error-msg" class="login-error" style="display:none">
-        ⚠ Authorization failed — please try again.
-      </p>
-      <p class="login-fine-print">You'll be taken to Yahoo to authorize access. Only league data is read — nothing is modified.</p>
-    </div>
+<div class="header">
+  <div class="header-top">
+    <a href="/" class="back-btn">← Back to League</a>
+    <span class="header-badge">⚾ 2026 Season Preview</span>
+  </div>
+  <div class="header-title">Dynasty Heroes <span>Prediction Hub</span></div>
+  <div class="header-sub">AI-powered analysis — rosters pulled live from Yahoo Fantasy</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('standings',this)">🏆 Season Predictions</button>
+    <button class="tab" onclick="showTab('odds',this)">💰 Championship Odds</button>
+    <button class="tab" onclick="showTab('previews',this)">📋 Team Previews</button>
+    <button class="tab" onclick="showTab('h2h',this)">⚔️ Head-to-Head</button>
+    <button class="tab" onclick="showTab('bold',this)">🎯 Bold Predictions</button>
+  </div>
+</div>
+
+<div class="main" id="main-content">
+  <div class="loading-screen" id="loading-screen">
+    <div class="spinner"></div>
+    <p>Fetching live rosters from Yahoo Fantasy...</p>
+  </div>
+</div>
+
+<template id="app-template">
+  <div id="roster-status" class="roster-status">
+    <span class="dot"></span>
+    <span id="roster-status-text">Live rosters loaded</span>
   </div>
 
-  <!-- ══════════════════════════════════════
-       MAIN APP
-  ══════════════════════════════════════ -->
-  <div id="screen-app" class="screen" style="display:none">
+  <div id="panel-standings" class="panel active">
+    <p class="intro">Claude analyzes all 18 live rosters and predicts where every team finishes — before a single pitch is thrown.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn-primary" id="btn-standings" onclick="runStandings()">🔮 Generate 2026 Predictions</button>
+    </div>
+    <div id="out-standings"></div>
+  </div>
 
-    <!-- HEADER -->
-    <header id="app-header">
-      <div class="hdr-inner container">
-        <div class="hdr-left">
-          <div class="live-badge"><span class="live-dot"></span><span id="season-tag">2026 Season</span></div>
-          <div class="hdr-title">Dynasty <strong>Heroes</strong></div>
-        </div>
-        <div class="hdr-right">
-          <div class="hdr-meta">
-            <span id="hdr-league-name">—</span>
-            <span id="hdr-week-label">—</span>
-          </div>
-          <a href="/auth/logout" class="btn-logout">Sign out</a>
-        </div>
+  <div id="panel-odds" class="panel">
+    <p class="intro">Vegas-style championship probability for every team. Probabilities sum to 100%.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn-primary" id="btn-odds" onclick="runOdds()">💰 Generate Championship Odds</button>
+    </div>
+    <div id="out-odds"></div>
+  </div>
+
+  <div id="panel-previews" class="panel">
+    <p class="intro">Click any team for a full scouting report: grades, strengths, weaknesses, sleeper, and 2026 outlook.</p>
+    <div class="team-pills" id="team-pills"></div>
+    <div id="out-previews"></div>
+  </div>
+
+  <div id="panel-h2h" class="panel">
+    <p class="intro">Pick two teams and Claude predicts the category-by-category result: R, HR, RBI, SB, ERA, WHIP, K, Saves.</p>
+    <div class="matchup-grid">
+      <div class="select-wrap">
+        <label>Team A</label>
+        <select class="team-select" id="sel-a"></select>
       </div>
-      <nav class="tab-nav container">
-        <button class="tab-btn active" data-tab="standings">Standings</button>
-        <button class="tab-btn" data-tab="scoreboard">Scoreboard</button>
-        <button class="tab-btn" data-tab="transactions">Transactions</button>
-      </nav>
-    </header>
-
-    <!-- MAIN -->
-    <main class="container" id="main">
-
-      <!-- Spinner -->
-      <div id="spinner" class="spinner-wrap" style="display:none">
-        <div class="spinner"></div>
-        <p>Loading…</p>
+      <div class="vs-label">VS</div>
+      <div class="select-wrap">
+        <label>Team B</label>
+        <select class="team-select" id="sel-b"></select>
       </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn-primary" id="btn-h2h" onclick="runH2H()">⚔️ Predict This Matchup</button>
+    </div>
+    <div id="out-h2h"></div>
+  </div>
 
-      <!-- Error banner -->
-      <div id="error-banner" class="error-banner" style="display:none">
-        <span id="error-text">Something went wrong.</span>
-        <button onclick="location.reload()">Retry</button>
-      </div>
+  <div id="panel-bold" class="panel">
+    <p class="intro">8 spicy, specific, arguable predictions for 2026. These will age like fine wine or be screenshot disasters.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn-primary" id="btn-bold" onclick="runBold()">🎯 Generate Bold Predictions</button>
+    </div>
+    <div id="out-bold"></div>
+  </div>
+</template>
 
-      <!-- ── STANDINGS ── -->
-      <section id="panel-standings" class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Standings</h2>
-          <span id="standings-meta" class="panel-meta">18 teams · 2026</span>
-        </div>
-        <div class="table-scroll">
-          <table id="standings-table" class="standings-table">
-            <thead>
-              <tr>
-                <th class="tc">#</th>
-                <th class="tl">Team</th>
-                <th class="tc">W</th>
-                <th class="tc">L</th>
-                <th class="tc">T</th>
-                <th class="tc">Pct</th>
-                <th class="tc hide-sm">Streak</th>
-                <th class="tc hide-sm">Moves</th>
-                <th class="tc hide-sm">Waiver</th>
-              </tr>
-            </thead>
-            <tbody id="standings-body"></tbody>
-          </table>
-        </div>
-      </section>
+<script>
+// ── TEAM COLORS (by team ID) ──────────────────────────────────────────────────
+const TEAM_COLORS = {
+  1:"#2563eb", 2:"#dc2626", 3:"#db2777", 4:"#92400e",
+  5:"#7c3aed", 6:"#f97316", 7:"#9333ea", 8:"#d97706",
+  9:"#00ff88", 10:"#059669", 11:"#64748b", 12:"#be123c",
+  13:"#0ea5e9", 14:"#1d4ed8", 15:"#15803d", 16:"#16a34a",
+  17:"#ca8a04", 18:"#0891b2"
+};
 
-      <!-- ── SCOREBOARD ── -->
-      <section id="panel-scoreboard" class="panel" style="display:none">
-        <div class="panel-header">
-          <h2 class="panel-title">Scoreboard</h2>
-          <div class="week-ctrl">
-            <button id="btn-prev-week" class="wk-btn">←</button>
-            <span id="week-display" class="wk-label">Week 1</span>
-            <button id="btn-next-week" class="wk-btn">→</button>
-          </div>
-        </div>
-        <div id="matchups-grid" class="matchups-grid"></div>
-      </section>
+let ROSTERS = {}; // { "Team Name": { color, players: ["Name (POS)", ...] } }
+let TEAMS = [];
+let loadedAt = null;
 
-      <!-- ── TRANSACTIONS ── -->
-      <section id="panel-transactions" class="panel" style="display:none">
-        <div class="panel-header">
-          <h2 class="panel-title">Transactions</h2>
-          <span class="panel-meta">Recent activity</span>
-        </div>
-        <div id="tx-feed" class="tx-feed"></div>
-      </section>
+// ── LOAD ROSTERS FROM API ─────────────────────────────────────────────────────
+async function loadRosters() {
+  try {
+    // First get team list
+    const leagueRes = await fetch('/api/league');
+    const league = await leagueRes.json();
 
-    </main>
-  </div><!-- /screen-app -->
+    // Fetch all 18 rosters in parallel
+    const teamIds = Array.from({length: 18}, (_, i) => i + 1);
+    const rosterPromises = teamIds.map(id =>
+      fetch(`/api/teams/${id}/roster`).then(r => r.json()).catch(() => null)
+    );
+    const rosters = await Promise.all(rosterPromises);
 
-  <script src="/js/app.js"></script>
+    // Build ROSTERS object
+    ROSTERS = {};
+    rosters.forEach((data, idx) => {
+      if (!data) return;
+      const id = teamIds[idx];
+      const teamName = data.team_name || `Team ${id}`;
+      const players = (data.players || []).map(p => {
+        const pos = Array.isArray(p.eligible_positions)
+          ? p.eligible_positions.filter(x => x !== 'BN' && x !== 'DL' && x !== 'NA').slice(0,2).join('/')
+          : (p.position || '');
+        return `${p.name}${pos ? ' (' + pos + ')' : ''}`;
+      });
+      ROSTERS[teamName] = {
+        color: TEAM_COLORS[id] || '#888',
+        players
+      };
+    });
+
+    TEAMS = Object.keys(ROSTERS);
+    loadedAt = new Date();
+    return true;
+  } catch (err) {
+    console.error('Failed to load rosters:', err);
+    return false;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const ok = await loadRosters();
+  const main = document.getElementById('main-content');
+
+  if (!ok || TEAMS.length === 0) {
+    main.innerHTML = `<div class="error-screen">
+      <div>⚠️ Could not load rosters from Yahoo API</div>
+      <button class="btn-secondary" onclick="location.reload()">Try Again</button>
+    </div>`;
+    return;
+  }
+
+  // Inject app template
+  const tpl = document.getElementById('app-template').content.cloneNode(true);
+  main.innerHTML = '';
+  main.appendChild(tpl);
+
+  // Status line
+  document.getElementById('roster-status-text').textContent =
+    `Live rosters loaded · ${TEAMS.length} teams · ${loadedAt.toLocaleTimeString()}`;
+
+  // Build team pills
+  const pillContainer = document.getElementById('team-pills');
+  TEAMS.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'team-pill';
+    btn.textContent = name;
+    btn.style.color = ROSTERS[name].color;
+    btn.onclick = () => selectTeam(name, btn);
+    pillContainer.appendChild(btn);
+  });
+
+  // Build selects
+  ['sel-a','sel-b'].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    TEAMS.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    // Default: Good Wood vs L7 Weenies if they exist
+    const defaults = ['Good Wood', 'L7 Weenies'];
+    if (TEAMS.includes(defaults[i])) sel.value = defaults[i];
+    else sel.value = TEAMS[i] || TEAMS[0];
+  });
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── CLAUDE API ────────────────────────────────────────────────────────────────
+async function streamClaude(prompt, outputEl, btnEl) {
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Analyzing...'; }
+  outputEl.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><span>Claude is analyzing rosters...</span></div>';
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    outputEl.innerHTML = '<div class="stream-box" id="stream-inner"></div>';
+    const inner = document.getElementById('stream-inner');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+        try {
+          const j = JSON.parse(data);
+          if (j.type === 'content_block_delta' && j.delta?.text) {
+            full += j.delta.text;
+            inner.innerHTML = renderMarkdown(full);
+            inner.scrollTop = inner.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+    return full;
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = btnEl.dataset.label || 'Regenerate ↺'; }
+  }
+}
+
+function renderMarkdown(text) {
+  return text.split('\n').map(line => {
+    if (line.startsWith('# ')) return `<div class="h1">${line.slice(2)}</div>`;
+    if (line.startsWith('## ')) return `<div class="h2">${line.slice(3)}</div>`;
+    if (line.match(/^\*\*(.+)\*\*$/)) return `<div class="bold">${line.replace(/\*\*/g,'')}</div>`;
+    if (line.match(/^[-•] /)) return `<div class="li">${line}</div>`;
+    if (line.match(/^\d+\./)) return `<div class="num">${line}</div>`;
+    if (line.trim() === '') return '<div style="height:6px"></div>';
+    return `<div class="plain">${line}</div>`;
+  }).join('');
+}
+
+function rosterStr(name, count=8) {
+  return `${name}: ${(ROSTERS[name]?.players || []).slice(0,count).join(', ')}`;
+}
+
+// ── SEASON STANDINGS ──────────────────────────────────────────────────────────
+async function runStandings() {
+  const btn = document.getElementById('btn-standings');
+  btn.dataset.label = '🔄 Regenerate';
+  const summary = TEAMS.map(n => rosterStr(n, 8)).join('\n');
+  await streamClaude(
+    `You are an expert fantasy baseball analyst. Analyze these ${TEAMS.length} Dynasty Heroes fantasy baseball rosters for the 2026 MLB season.\n\nPredict the final regular season standings in three tiers:\n# Championship Contenders (Predicted Finish: 1-6)\n# Playoff Bubble (Predicted Finish: 7-12)\n# Rebuilding / Long Shot (Predicted Finish: 13-18)\n\nWithin each tier, rank teams and give a one-sentence reason per team. Reference specific player names. Be opinionated.\n\nROSTERS:\n${summary}`,
+    document.getElementById('out-standings'), btn
+  );
+}
+
+// ── CHAMPIONSHIP ODDS ─────────────────────────────────────────────────────────
+async function runOdds() {
+  const btn = document.getElementById('btn-odds');
+  btn.dataset.label = '🔄 Regenerate';
+  const out = document.getElementById('out-odds');
+  out.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><span>Calculating odds...</span></div>';
+  btn.disabled = true; btn.textContent = 'Calculating...';
+  const summary = TEAMS.map(n => rosterStr(n, 6)).join('\n');
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: `Assign championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. Must sum to exactly 100. Return ONLY a JSON object, no other text:\n{"TeamName": number, ...}\n\nROSTERS:\n${summary}` }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text;
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const sorted = Object.entries(parsed).sort((a, b) => b[1] - a[1]);
+    out.innerHTML = '<div class="odds-list" id="odds-list"></div>';
+    const list = document.getElementById('odds-list');
+    sorted.forEach(([team, pct], i) => {
+      const color = ROSTERS[team]?.color || '#666';
+      const isTop = i < 3;
+      const rankLabel = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+      const div = document.createElement('div');
+      div.className = `odds-row${isTop?' top3':''}`;
+      div.innerHTML = `
+        <span class="odds-rank" style="color:${isTop?color:'var(--text4)'}">${rankLabel}</span>
+        <span class="odds-dot" style="background:${color}"></span>
+        <span class="odds-name">${team}</span>
+        <div class="odds-track"><div class="odds-fill" style="background:${color};width:0%" data-w="${Math.min(pct*3.8,100)}"></div></div>
+        <span class="odds-pct" style="color:${isTop?color:'var(--text3)'}">${pct}%</span>`;
+      list.appendChild(div);
+    });
+    setTimeout(() => {
+      document.querySelectorAll('.odds-fill').forEach(el => { el.style.width = el.dataset.w + '%'; });
+    }, 100);
+    const regen = document.createElement('button');
+    regen.className = 'btn-secondary'; regen.style.marginTop = '16px';
+    regen.textContent = '🔄 Regenerate'; regen.onclick = runOdds;
+    out.appendChild(regen);
+  } catch(e) {
+    out.innerHTML = `<div style="color:var(--red);font-size:13px;padding:16px">Error: ${e.message}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '🔄 Regenerate';
+}
+
+// ── TEAM PREVIEWS ─────────────────────────────────────────────────────────────
+const previewCache = {};
+let activeTeam = null;
+
+function selectTeam(name, btnEl) {
+  document.querySelectorAll('.team-pill').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  activeTeam = name;
+  renderPreview(name);
+}
+
+async function renderPreview(name) {
+  const out = document.getElementById('out-previews');
+  const color = ROSTERS[name]?.color || '#888';
+  const header = `<div class="scout-header">
+    <div class="scout-name"><span class="scout-dot" style="background:${color}"></span>${name}</div>
+    ${previewCache[name] ? '<button class="btn-secondary" onclick="refreshPreview()">🔄 Refresh</button>' : ''}
+  </div>`;
+  if (previewCache[name]) {
+    out.innerHTML = header + '<div class="stream-box">' + renderMarkdown(previewCache[name]) + '</div>';
+    return;
+  }
+  out.innerHTML = header + '<div id="preview-stream"></div>';
+  const players = (ROSTERS[name]?.players || []).join(', ');
+  const result = await streamClaude(
+    `Write a 2026 preseason scouting report for the Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nUse these exact sections:\n## Overall Grade: [A+ through D]\n## Offense (Grade: X): 2-3 sentences on hitting, power, run scoring\n## Pitching (Grade: X): 2-3 sentences on SP depth, RP, ERA/WHIP potential\n## Strengths: 3 bullet points with specific player names\n## Weaknesses: 2 bullet points with specific concerns\n## Sleeper to Watch: One player who could break out in 2026\n## 2026 Outlook: One punchy paragraph with a specific prediction.\n\nBe opinionated, specific, and entertaining.`,
+    document.getElementById('preview-stream'), null
+  );
+  previewCache[name] = result;
+}
+
+function refreshPreview() {
+  if (activeTeam) { delete previewCache[activeTeam]; renderPreview(activeTeam); }
+}
+
+// ── HEAD TO HEAD ──────────────────────────────────────────────────────────────
+async function runH2H() {
+  const btn = document.getElementById('btn-h2h');
+  btn.dataset.label = '🔄 Rematch';
+  const teamA = document.getElementById('sel-a').value;
+  const teamB = document.getElementById('sel-b').value;
+  if (teamA === teamB) { alert('Pick two different teams!'); return; }
+  const out = document.getElementById('out-h2h');
+  const colorA = ROSTERS[teamA]?.color || '#888';
+  const colorB = ROSTERS[teamB]?.color || '#888';
+  out.innerHTML = `<div class="matchup-banners">
+    <div class="mb"><span class="mb-dot" style="background:${colorA}"></span><span class="mb-name">${teamA}</span></div>
+    <div class="mb"><span class="mb-dot" style="background:${colorB}"></span><span class="mb-name">${teamB}</span></div>
+  </div><div id="h2h-stream"></div>`;
+  const rosA = (ROSTERS[teamA]?.players || []).join(', ');
+  const rosB = (ROSTERS[teamB]?.players || []).join(', ');
+  await streamClaude(
+    `Fantasy baseball head-to-head prediction: ${teamA} vs ${teamB} for 2026 Dynasty Heroes.\n\n${teamA}: ${rosA}\n${teamB}: ${rosB}\n\n## Category Breakdown\nFor each category pick a winner with a brief specific reason:\n- **R (Runs):** [winner] — reason\n- **HR (Home Runs):** [winner] — reason\n- **RBI:** [winner] — reason\n- **SB (Stolen Bases):** [winner] — reason\n- **ERA:** [winner] — reason\n- **WHIP:** [winner] — reason\n- **K (Strikeouts):** [winner] — reason\n- **Saves:** [winner] — reason\n\n## Score\n${teamA}: X | ${teamB}: Y\n\n## Verdict\n2 sentences. Who wins and the decisive factor.\n\n## X-Factor\nOne player who could flip the result entirely.`,
+    document.getElementById('h2h-stream'), btn
+  );
+}
+
+// ── BOLD PREDICTIONS ──────────────────────────────────────────────────────────
+async function runBold() {
+  const btn = document.getElementById('btn-bold');
+  btn.dataset.label = '🔄 New Predictions';
+  const summary = TEAMS.map(n => rosterStr(n, 5)).join('\n');
+  await streamClaude(
+    `You are a bold, fearless fantasy baseball analyst for the Dynasty Heroes league. Make exactly 8 BOLD predictions for the 2026 season. Be specific, arguable, and entertaining.\n\nROSTERS:\n${summary}\n\nFor each prediction:\n## 🎯 [Short punchy title]\n**The Call:** [1-2 sentences — the specific bold prediction]\n**Why it happens:** [2-3 sentences using specific player names]\n**Upset Factor:** [⚡ to ⚡⚡⚡⚡⚡] | **Confidence:** [Low/Medium/High]\n\nInclude predictions about: biggest surprise team, biggest disappointment, a sleeper champion, a team that collapses, a player who carries their team, a dominant pitching staff, one specific statistical prediction, and something about Good Wood (4-time dynasty champs).`,
+    document.getElementById('out-bold'), btn
+  );
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+init();
+</script>
 </body>
 </html>
