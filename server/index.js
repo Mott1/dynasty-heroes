@@ -8,6 +8,7 @@ const connectRedis = require('connect-redis');
 const RedisStore = connectRedis.default || connectRedis;
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 const YAHOO_AUTH_URL = 'https://api.login.yahoo.com/oauth2/request_auth';
