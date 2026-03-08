@@ -3,7 +3,8 @@ const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
 const path = require('path');
-const redis = require('redis');
+const connectRedis = require('connect-redis');
+const RedisStore = connectRedis.default || connectRedis;
 const RedisStore = require('connect-redis').default;
 
 const app = express();
