@@ -850,23 +850,41 @@ async function runOdds() {
   const btn = document.getElementById('btn-odds');
   btn.dataset.label = '↺ Regenerate';
   const out = document.getElementById('out-odds');
-  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Calculating probabilities…</div>`;
+  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Evaluating rosters, then calculating odds…</div>`;
   btn.disabled=true; btn.textContent='Calculating…';
   try {
     const summary = TEAMS.map(n=>roster(n,27)).join('\n');
-    const res = await fetch('/api/groq', {
+
+    // Step 1: Ask Llama to evaluate each team using its own current knowledge
+    const evalRes = await fetch('/api/groq', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:1024,
-        messages:[{role:'system',content:'You are a JSON API. You must respond with ONLY a valid JSON object and absolutely nothing else. No explanation, no markdown, no code fences, no preamble.'},{role:'user',content:`Return ONLY a JSON object assigning championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. The numbers must sum to exactly 100. Carefully evaluate each team's FULL roster — stars matter but so do depth, weak spots, and injured players. Format: {"TeamName": number}\n\nFULL ROSTERS:\n${summary}`}]
+        model:'llama-3.3-70b-versatile', max_tokens:2000,
+        messages:[{role:'system',content:'You are an expert fantasy baseball analyst with up-to-date knowledge of MLB players heading into the 2026 season. You know which players are injured, declining, or emerging.'},{role:'user',content:`For each of these ${TEAMS.length} Dynasty Heroes fantasy baseball teams, write 1-2 sentences evaluating their 2026 prospects. Use your knowledge of each player's current injury status, age, recent performance, and 2026 outlook. Be specific about who is hurt, who is declining, and who is a star. Be brutally honest.
+
+SCORING CATEGORIES: BATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG | PITCHING: W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS
+
+ROSTERS:
+${summary}`}]
       })
     });
-    const data = await res.json();
-    // Groq uses OpenAI format: choices[0].message.content
+    const evalData = await evalRes.json();
+    const evaluations = evalData.choices?.[0]?.message?.content || '';
+
+    // Step 2: Use those evaluations to produce calibrated JSON odds
+    const oddsRes = await fetch('/api/groq', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile', max_tokens:800,
+        messages:[
+          {role:'system', content:'You are a JSON API. Respond with ONLY a valid JSON object, no markdown, no explanation.'},
+          {role:'user', content:`Based on these expert team evaluations for the 2026 Dynasty Heroes fantasy baseball season, assign championship win probability % to each team. Numbers must sum to exactly 100. Format: {"TeamName": number}\n\nEVALUATIONS:\n${evaluations}\n\nTEAM NAMES (use exact spelling):\n${TEAMS.join(', ')}`}
+        ]
+      })
+    });
+    const data = await oddsRes.json();
     let raw = (data.choices?.[0]?.message?.content || '').trim();
-    // Strip any markdown code fences Llama might add anyway
-    raw = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
-    // Extract just the JSON object if there's surrounding text
+    raw = raw.replace(/\`\`\`json\s*/gi,'').replace(/\`\`\`\s*/gi,'').trim();
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON found in response: ' + raw.slice(0,100));
     const parsed = JSON.parse(jsonMatch[0]);
