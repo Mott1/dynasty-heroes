@@ -779,7 +779,7 @@ async function callClaude(prompt, outputEl, btnEl, stream=true) {
   try {
     const res = await fetch('/api/groq', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'llama-3.3-70b-versatile', max_tokens:4096, stream, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'llama-3.3-70b-versatile', max_tokens:4096, stream, messages:[{role:'system',content:'You are a brutally honest fantasy baseball analyst. When grading teams, use the FULL A+ through F scale. Most teams are average (C). Only elite rosters deserve A grades. Weak rosters with bad players deserve D or F. Do not inflate grades.'},{role:'user',content:prompt}] })
     });
     if (stream) {
       const reader = res.body.getReader();
@@ -962,7 +962,7 @@ async function renderPreview(name) {
   if (previewCache[name]) { inner.innerHTML = md(previewCache[name]); return; }
   const players = (ROSTERS[name]?.players||[]).join(', ');
   const result = await callClaude(
-    `Write a 2026 preseason scouting report for Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nUse exactly these sections:\n## Overall Grade: [A+ through D]\n## Offense (Grade: ?): 2–3 sentences on which batting categories this team wins or loses, naming specific players\n## Pitching (Grade: ?): 2–3 sentences on which pitching categories this team dominates or struggles in\n## Strengths: 3 bullet points naming specific players and the categories they help win\n## Weaknesses: 2 bullet points with specific category concerns\n## Sleeper to Watch: One breakout candidate with explanation\n## 2026 Outlook: One bold paragraph with a specific prediction\n\nBe opinionated, specific, and entertaining.`,
+    `Write a 2026 preseason scouting report for Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nUse exactly these sections:\n## Overall Grade: [A+ through F — use the FULL scale. Only 2-3 teams deserve A range. Most teams are B or C. Weak rosters should get D or F.]\n## Offense (Grade: [A+ through F]): 2–3 sentences on which batting categories this team wins or loses, naming specific players\n## Pitching (Grade: [A+ through F]): 2–3 sentences on which pitching categories this team dominates or struggles in\n## Strengths: 3 bullet points naming specific players and the categories they help win\n## Weaknesses: 2 bullet points with specific category concerns\n## Sleeper to Watch: One breakout candidate with explanation\n## 2026 Outlook: One bold paragraph with a specific prediction\n\nBe opinionated, specific, and entertaining.`,
     inner, null, true
   );
   previewCache[name] = result;
