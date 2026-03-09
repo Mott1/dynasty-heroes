@@ -850,48 +850,60 @@ async function runOdds() {
   const btn = document.getElementById('btn-odds');
   btn.dataset.label = '↺ Regenerate';
   const out = document.getElementById('out-odds');
-  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Evaluating rosters, then calculating odds…</div>`;
+  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 player rankings…</div>`;
   btn.disabled=true; btn.textContent='Calculating…';
   try {
-    const summary = TEAMS.map(n=>roster(n,27)).join('\n');
+    // Fetch all rostered players with Yahoo's official 2026 preseason ranks
+    const rankMap = {};
+    for(let start=0; start<500; start+=25) {
+      const r = await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
+      const d = await r.json();
+      const players = d?.fantasy_content?.league?.[1]?.players;
+      const count = players?.count || 0;
+      if(count === 0) break;
+      for(let i=0;i<count;i++){
+        const p = players[i]?.player;
+        if(!p) continue;
+        const info = Array.isArray(p[0]) ? p[0] : [];
+        const name = info.find(x=>x?.name)?.name?.full;
+        if(!name) continue;
+        const rankList = p[1]?.player_ranks || [];
+        const rank2026 = rankList.find(r=>r?.player_rank?.rank_type==='S' && r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
+        const rankOR = rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
+        const rank = parseInt(rank2026) || parseInt(rankOR) || 9999;
+        rankMap[name.toLowerCase()] = rank;
+        // also index without suffixes like "(Batter)"
+        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] = rank;
+      }
+      if(count < 25) break;
+    }
 
-    // Step 1: Ask Llama to evaluate each team using its own current knowledge
-    const evalRes = await fetch('/api/groq', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:2000,
-        messages:[{role:'system',content:'You are an expert fantasy baseball analyst with up-to-date knowledge of MLB players heading into the 2026 season. You know which players are injured, declining, or emerging.'},{role:'user',content:`For each of these ${TEAMS.length} Dynasty Heroes fantasy baseball teams, write 1-2 sentences evaluating their 2026 prospects. Use your knowledge of each player's current injury status, age, recent performance, and 2026 outlook. Be specific about who is hurt, who is declining, and who is a star. Be brutally honest.
+    // Score each team: sum of top-14 player ranks (lower = better)
+    const scores = {};
+    for(const teamName of TEAMS) {
+      const data = ROSTERS[teamName];
+      if(!data) continue;
+      const playerRanks = data.players.map(p => {
+        const clean = p.replace(/\s*\(.*?\)/,'').trim().toLowerCase();
+        return rankMap[clean] || 600;
+      });
+      playerRanks.sort((a,b)=>a-b);
+      scores[teamName] = playerRanks.slice(0,14).reduce((s,r)=>s+r, 0);
+    }
 
-SCORING CATEGORIES: BATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG | PITCHING: W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS
-
-ROSTERS:
-${summary}`}]
-      })
-    });
-    const evalData = await evalRes.json();
-    const evaluations = evalData.choices?.[0]?.message?.content || '';
-
-    // Step 2: Use those evaluations to produce calibrated JSON odds
-    const oddsRes = await fetch('/api/groq', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:800,
-        messages:[
-          {role:'system', content:'You are a JSON API. Respond with ONLY a valid JSON object, no markdown, no explanation.'},
-          {role:'user', content:`Based on these expert team evaluations for the 2026 Dynasty Heroes fantasy baseball season, assign championship win probability % to each team. Numbers must sum to exactly 100. Format: {"TeamName": number}\n\nEVALUATIONS:\n${evaluations}\n\nTEAM NAMES (use exact spelling):\n${TEAMS.join(', ')}`}
-        ]
-      })
-    });
-    const data = await oddsRes.json();
-    let raw = (data.choices?.[0]?.message?.content || '').trim();
-    raw = raw.replace(/\`\`\`json\s*/gi,'').replace(/\`\`\`\s*/gi,'').trim();
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response: ' + raw.slice(0,100));
-    const parsed = JSON.parse(jsonMatch[0]);
-    const sorted = Object.entries(parsed).sort((a,b)=>b[1]-a[1]);
+    // Convert scores to win probabilities using exponential weighting
+    const entries = Object.entries(scores);
+    const maxScore = Math.max(...entries.map(e=>e[1]));
+    const weights = entries.map(([team, score]) => [team, Math.pow(maxScore / score, 3)]);
+    const totalWeight = weights.reduce((s,[,w])=>s+w, 0);
+    const oddsEntries = weights.map(([team, w]) => [team, Math.round(w / totalWeight * 1000) / 10]);
+    // Fix rounding to exactly 100
+    const total = oddsEntries.reduce((s,[,p])=>s+p, 0);
+    oddsEntries[0][1] = Math.round((oddsEntries[0][1] + (100 - total)) * 10) / 10;
+    const sorted = oddsEntries.sort((a,b)=>b[1]-a[1]);
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = `<div class="card-header"><span class="card-label">Championship Probability</span><span class="card-label" style="opacity:.5">= 100%</span></div><div class="odds-list"></div>`;
+    card.innerHTML = `<div class="card-header"><span class="card-label">Championship Probability</span><span class="card-label" style="opacity:.5">Based on Yahoo 2026 Rankings</span></div><div class="odds-list"></div>`;
     const list = card.querySelector('.odds-list');
     sorted.forEach(([team,pct],i) => {
       const color = ROSTERS[team]?.color||'#64748b';
@@ -912,10 +924,6 @@ ${summary}`}]
     requestAnimationFrame(()=>setTimeout(()=>{
       out.querySelectorAll('.odds-bar-fill').forEach(el=>{el.style.width=el.dataset.w+'%';});
     },80));
-    const regen = document.createElement('button');
-    regen.className='btn btn-ghost btn-full'; regen.style.marginTop='12px';
-    regen.textContent='↺ Regenerate'; regen.onclick=runOdds;
-    out.appendChild(regen);
   } catch(e) {
     out.innerHTML=`<div class="error-card">Error: ${e.message}</div>`;
   }
