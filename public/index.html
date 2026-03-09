@@ -9,511 +9,222 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --bg:         #13151c;
-  --bg-card:    #1c1f2a;
-  --bg-raised:  #242836;
-  --bg-input:   #1a1d26;
-  --border:     rgba(255,255,255,.07);
-  --border-hi:  rgba(255,255,255,.13);
-  --text-1:     #f0f2f8;
-  --text-2:     #8b90a7;
-  --text-3:     #525670;
-  --cyan:       #00d4aa;
-  --cyan-dim:   rgba(0,212,170,.12);
-  --cyan-glow:  rgba(0,212,170,.3);
-  --purple:     #7b5ea7;
-  --purple-dim: rgba(123,94,167,.15);
-  --orange:     #ff6b35;
-  --yellow:     #ffd166;
-  --red:        #ff4757;
-  --red-dim:    rgba(255,71,87,.12);
-  --green:      #2ed573;
-  --shadow-card: 0 2px 12px rgba(0,0,0,.4);
-  --shadow-lg:   0 8px 32px rgba(0,0,0,.5);
-  --font:  'Barlow', system-ui, sans-serif;
-  --font-cond: 'Barlow Condensed', system-ui, sans-serif;
-  --tab-h: 64px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #13151c; --bg-card: #1c1f2a; --bg-raised: #242836; --bg-input: #1a1d26;
+  --border: rgba(255,255,255,.07); --border-hi: rgba(255,255,255,.13);
+  --text-1: #f0f2f8; --text-2: #8b90a7; --text-3: #525670;
+  --cyan: #00d4aa; --cyan-dim: rgba(0,212,170,.12); --cyan-glow: rgba(0,212,170,.3);
+  --purple: #7b5ea7; --purple-dim: rgba(123,94,167,.15);
+  --orange: #ff6b35; --yellow: #ffd166; --red: #ff4757; --red-dim: rgba(255,71,87,.12);
+  --green: #2ed573; --shadow-card: 0 2px 12px rgba(0,0,0,.4); --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+  --font: 'Barlow', system-ui, sans-serif; --font-cond: 'Barlow Condensed', system-ui, sans-serif;
+  --tab-h: 64px; --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-
 html { font-size: 15px; scroll-behavior: smooth; }
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text-1);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  padding-bottom: calc(var(--tab-h) + var(--safe-bottom));
-  overflow-x: hidden;
-}
-
-@keyframes spin   { to { transform: rotate(360deg); } }
+body { font-family: var(--font); background: var(--bg); color: var(--text-1); line-height: 1.5;
+  -webkit-font-smoothing: antialiased; min-height: 100vh;
+  padding-bottom: calc(var(--tab-h) + var(--safe-bottom)); overflow-x: hidden; }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes slideIn { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
-
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 30px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4); }
+  50% { box-shadow: 0 0 60px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4); }
+}
 button,select { font-family: var(--font); cursor: pointer; }
 a { text-decoration: none; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg-raised); border-radius: 10px; }
 
-/* ─── TOPBAR ──────────────────────────────────── */
-.topbar {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(19,21,28,.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  height: 56px;
-  display: flex; align-items: center;
-  padding: 0 16px; gap: 12px;
-}
-.topbar-back {
-  width: 34px; height: 34px; border-radius: 10px;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-2); flex-shrink: 0;
-  transition: all .15s;
-}
-.topbar-back:hover { background: var(--bg-input); color: var(--text-1); }
+.topbar { position: sticky; top: 0; z-index: 100; background: rgba(19,21,28,.94);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
 .topbar-brand { display: flex; align-items: center; gap: 9px; flex: 1; }
-.topbar-logo {
-  width: 32px; height: 32px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--cyan), #00a884);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-cond); font-size: 15px; font-weight: 900;
-  color: #13151c; letter-spacing: .02em; flex-shrink: 0;
-  box-shadow: 0 0 16px var(--cyan-glow);
-}
-.topbar-title {
-  font-family: var(--font-cond); font-size: 17px; font-weight: 800;
-  color: var(--text-1); letter-spacing: .02em; line-height: 1;
-}
-.topbar-season {
-  font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--cyan);
-  background: var(--cyan-dim); border: 1px solid rgba(0,212,170,.2);
-  padding: 3px 8px; border-radius: 6px; margin-left: auto; flex-shrink: 0;
-}
+.topbar-logo { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, var(--cyan), #00a884);
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-cond); font-size: 15px;
+  font-weight: 900; color: #13151c; letter-spacing: .02em; flex-shrink: 0; box-shadow: 0 0 16px var(--cyan-glow); }
+.topbar-title { font-family: var(--font-cond); font-size: 17px; font-weight: 800; color: var(--text-1); letter-spacing: .02em; line-height: 1; }
+.topbar-season { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--cyan); background: var(--cyan-dim); border: 1px solid rgba(0,212,170,.2);
+  padding: 3px 8px; border-radius: 6px; margin-left: auto; flex-shrink: 0; }
 
-/* ─── HERO BANNER ─────────────────────────────── */
-.hero {
-  background: linear-gradient(135deg, #1c1f2a 0%, #13151c 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 20px 16px 18px;
-  position: relative; overflow: hidden;
-}
-.hero::after {
-  content: '';
-  position: absolute; top: -40px; right: -40px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(0,212,170,.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-.hero-label {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--cyan);
-  margin-bottom: 8px;
-}
-.live-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
-  animation: pulse 1.8s ease-in-out infinite;
-}
-.hero-h1 {
-  font-family: var(--font-cond); font-size: 26px; font-weight: 900;
-  letter-spacing: .01em; color: var(--text-1); line-height: 1.1;
-  margin-bottom: 6px; text-transform: uppercase;
-}
+.hero { background: linear-gradient(135deg, #1c1f2a 0%, #13151c 100%); border-bottom: 1px solid var(--border);
+  padding: 20px 16px 18px; position: relative; overflow: hidden; }
+.hero::after { content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(0,212,170,.08) 0%, transparent 70%); pointer-events: none; }
+.hero-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan); animation: pulse 1.8s ease-in-out infinite; }
+.hero-h1 { font-family: var(--font-cond); font-size: 26px; font-weight: 900; letter-spacing: .01em;
+  color: var(--text-1); line-height: 1.1; margin-bottom: 6px; text-transform: uppercase; }
 .hero-sub { font-size: 13px; color: var(--text-3); font-weight: 500; }
-.hero-meta {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: 14px; flex-wrap: wrap;
-}
-.meta-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11.5px; font-weight: 600;
-  color: var(--text-3); background: var(--bg-raised);
-  border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px;
-}
+.hero-meta { display: flex; align-items: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.meta-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600;
+  color: var(--text-3); background: var(--bg-raised); border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px; }
 .meta-chip.live { color: var(--cyan); background: var(--cyan-dim); border-color: rgba(0,212,170,.2); }
-.spinner-xs {
-  width: 10px; height: 10px; border-radius: 50%;
-  border: 1.5px solid var(--bg-raised); border-top-color: var(--cyan);
-  animation: spin .7s linear infinite;
-}
+.spinner-xs { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--bg-raised);
+  border-top-color: var(--cyan); animation: spin .7s linear infinite; }
 
-/* ─── BOTTOM TAB BAR ──────────────────────────── */
-.tabbar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-  height: calc(var(--tab-h) + var(--safe-bottom));
-  background: rgba(19,21,28,.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid var(--border);
-  display: flex; align-items: flex-start;
-  padding-top: 6px;
-  padding-bottom: var(--safe-bottom);
-}
-.tab-btn {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; padding: 6px 4px;
-  background: none; border: none; cursor: pointer;
-  transition: all .15s; position: relative;
-}
-.tab-icon {
-  width: 36px; height: 28px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; transition: all .2s;
-}
-.tab-label {
-  font-size: 9.5px; font-weight: 700; letter-spacing: .05em;
-  text-transform: uppercase; color: var(--text-3); transition: color .15s;
-  line-height: 1;
-}
-.tab-btn.active .tab-icon {
-  background: var(--cyan-dim);
-  box-shadow: 0 0 12px var(--cyan-glow);
-}
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  height: calc(var(--tab-h) + var(--safe-bottom)); background: rgba(19,21,28,.97);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid var(--border);
+  display: flex; align-items: flex-start; padding-top: 6px; padding-bottom: var(--safe-bottom); }
+.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; background: none; border: none; cursor: pointer; transition: all .15s; position: relative; }
+.tab-icon { width: 36px; height: 28px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 16px; transition: all .2s; }
+.tab-label { font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-3); transition: color .15s; line-height: 1; }
+.tab-btn.active .tab-icon { background: var(--cyan-dim); box-shadow: 0 0 12px var(--cyan-glow); }
 .tab-btn.active .tab-label { color: var(--cyan); }
-.tab-btn.active::before {
-  content: '';
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-  width: 24px; height: 2px; background: var(--cyan);
-  border-radius: 0 0 2px 2px;
-  box-shadow: 0 0 8px var(--cyan);
-}
+.tab-btn.active::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 2px; background: var(--cyan); border-radius: 0 0 2px 2px; box-shadow: 0 0 8px var(--cyan); }
 
-/* ─── PAGE ────────────────────────────────────── */
 .page { max-width: 640px; margin: 0 auto; padding: 16px; }
 .panel { display: none; animation: slideIn .2s ease; }
 .panel.active { display: block; }
-
-/* ─── SECTION HEAD ────────────────────────────── */
 .sec-head { margin-bottom: 16px; }
-.sec-title {
-  font-family: var(--font-cond); font-size: 18px; font-weight: 800;
-  letter-spacing: .04em; text-transform: uppercase; color: var(--text-1);
-  margin-bottom: 3px;
-}
+.sec-title { font-family: var(--font-cond); font-size: 18px; font-weight: 800; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-1); margin-bottom: 3px; }
 .sec-sub { font-size: 12.5px; color: var(--text-3); font-weight: 500; }
 
-/* ─── BUTTONS ─────────────────────────────────── */
-.btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font); font-size: 13.5px; font-weight: 700;
-  letter-spacing: .03em; text-transform: uppercase;
-  padding: 10px 20px; border-radius: 10px;
-  border: none; cursor: pointer; transition: all .15s;
-  white-space: nowrap;
-}
-.btn-primary {
-  background: var(--cyan); color: #13151c;
-  box-shadow: 0 4px 16px var(--cyan-glow);
-}
+.btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font); font-size: 13.5px;
+  font-weight: 700; letter-spacing: .03em; text-transform: uppercase; padding: 10px 20px;
+  border-radius: 10px; border: none; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-primary { background: var(--cyan); color: #13151c; box-shadow: 0 4px 16px var(--cyan-glow); }
 .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 24px var(--cyan-glow); }
 .btn-primary:active { transform: none; filter: none; }
 .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
-.btn-ghost {
-  background: var(--bg-raised); color: var(--text-2);
-  border: 1px solid var(--border-hi);
-}
+.btn-ghost { background: var(--bg-raised); color: var(--text-2); border: 1px solid var(--border-hi); }
 .btn-ghost:hover { background: var(--bg-input); color: var(--text-1); }
 .btn-full { width: 100%; justify-content: center; }
 
-/* ─── SPINNER ─────────────────────────────────── */
-.spinner {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 2px solid var(--bg-raised); border-top-color: var(--cyan);
-  animation: spin .65s linear infinite; flex-shrink: 0;
-}
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--bg-raised);
+  border-top-color: var(--cyan); animation: spin .65s linear infinite; flex-shrink: 0; }
 .spinner-lg { width: 32px; height: 32px; border-width: 3px; }
-.loading-state {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; min-height: 260px; gap: 14px;
-}
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 260px; gap: 14px; }
 .loading-label { font-size: 13px; color: var(--text-3); font-weight: 500; }
-.thinking {
-  display: flex; align-items: center; gap: 10px;
-  padding: 20px; color: var(--text-3); font-size: 13px; font-weight: 500;
-}
+.thinking { display: flex; align-items: center; gap: 10px; padding: 20px; color: var(--text-3); font-size: 13px; font-weight: 500; }
 
-/* ─── CARD ────────────────────────────────────── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-.card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  background: var(--bg-raised);
-}
-.card-label {
-  font-family: var(--font-cond); font-size: 11px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--text-3);
-}
-.card-body {
-  padding: 18px 18px;
-  font-size: 14px; line-height: 1.85; color: var(--text-1);
-}
-
-/* ─── MARKDOWN ────────────────────────────────── */
-.card-body .h1 {
-  font-family: var(--font-cond); font-size: 13px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--cyan);
-  margin: 22px 0 10px;
-  padding: 8px 12px; background: var(--cyan-dim); border-radius: 8px;
-  border-left: 3px solid var(--cyan);
-}
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-card); overflow: hidden; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); background: var(--bg-raised); }
+.card-label { font-family: var(--font-cond); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.card-body { padding: 18px; font-size: 14px; line-height: 1.85; color: var(--text-1); }
+.card-body .h1 { font-family: var(--font-cond); font-size: 13px; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--cyan); margin: 22px 0 10px; padding: 8px 12px;
+  background: var(--cyan-dim); border-radius: 8px; border-left: 3px solid var(--cyan); }
 .card-body .h1:first-child { margin-top: 0; }
-.card-body .h2 {
-  font-family: var(--font-cond); font-size: 12px; font-weight: 800;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--text-2);
-  margin: 16px 0 6px;
-}
+.card-body .h2 { font-family: var(--font-cond); font-size: 12px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-2); margin: 16px 0 6px; }
 .card-body .bold { font-weight: 700; color: var(--text-1); }
-.card-body .li {
-  padding-left: 16px; color: var(--text-1); margin-bottom: 5px;
-  position: relative;
-}
+.card-body .li { padding-left: 16px; color: var(--text-1); margin-bottom: 5px; position: relative; }
 .card-body .li::before { content: '›'; position: absolute; left: 4px; color: var(--cyan); font-weight: 700; }
 .card-body .num { color: var(--text-1); padding-left: 2px; margin-bottom: 7px; font-weight: 600; }
 .card-body .plain { color: var(--text-1); margin-bottom: 2px; }
 .card-body .spacer { height: 10px; }
 
-/* ─── ACTION ROW ──────────────────────────────── */
 .action-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 
-/* ─── ODDS ────────────────────────────────────── */
 .odds-list { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; }
-.odds-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 12px;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  border-radius: 10px; transition: all .15s;
-}
+.odds-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: var(--bg-raised);
+  border: 1px solid var(--border); border-radius: 10px; transition: all .15s; }
 .odds-row:hover { border-color: var(--border-hi); }
 .odds-row.top { border-color: rgba(0,212,170,.2); background: rgba(0,212,170,.05); }
-.odds-rank {
-  font-family: var(--font-cond); font-size: 14px; font-weight: 800;
-  color: var(--text-3); width: 28px; flex-shrink: 0;
-}
+.odds-rank { font-family: var(--font-cond); font-size: 14px; font-weight: 800; color: var(--text-3); width: 28px; flex-shrink: 0; }
 .odds-row.top .odds-rank { color: var(--cyan); }
 .odds-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 .odds-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-1); }
 .odds-bar-track { width: 100px; height: 3px; background: var(--bg); border-radius: 10px; overflow: hidden; flex-shrink: 0; }
 .odds-bar-fill { height: 100%; border-radius: 10px; transition: width 1.2s cubic-bezier(.34,1.2,.64,1); }
-.odds-pct {
-  font-family: var(--font-cond); font-size: 15px; font-weight: 800;
-  min-width: 44px; text-align: right; color: var(--text-3); flex-shrink: 0;
-}
+.odds-pct { font-family: var(--font-cond); font-size: 15px; font-weight: 800; min-width: 44px; text-align: right; color: var(--text-3); flex-shrink: 0; }
 .odds-row.top .odds-pct { color: var(--cyan); }
 
-/* ─── TEAM CHIPS ──────────────────────────────── */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-.chip {
-  font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
-  padding: 7px 14px; border-radius: 10px;
-  border: 1px solid var(--border-hi); background: var(--bg-raised);
-  color: var(--text-2); cursor: pointer; transition: all .15s;
-}
-.chip:hover { color: var(--text-1); border-color: var(--border-hi); background: var(--bg-input); }
+.chip { font-size: 12.5px; font-weight: 700; letter-spacing: .02em; padding: 7px 14px; border-radius: 10px;
+  border: 1px solid var(--border-hi); background: var(--bg-raised); color: var(--text-2); cursor: pointer; transition: all .15s; }
+.chip:hover { color: var(--text-1); background: var(--bg-input); }
 .chip.active { color: #13151c; border-color: transparent; font-weight: 800; }
 
-/* ─── SCOUT ───────────────────────────────────── */
-.scout-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; background: var(--bg-raised);
-  border-radius: 14px 14px 0 0; border: 1px solid var(--border);
-  border-bottom: none;
-}
-.scout-name {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-cond); font-size: 18px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: .04em; color: var(--text-1);
-}
+.scout-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+  background: var(--bg-raised); border-radius: 14px 14px 0 0; border: 1px solid var(--border); border-bottom: none; }
+.scout-name { display: flex; align-items: center; gap: 10px; font-family: var(--font-cond); font-size: 18px;
+  font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--text-1); }
 .scout-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-.scout-body {
-  border: 1px solid var(--border); border-top: none;
-  border-radius: 0 0 14px 14px; overflow: hidden; background: var(--bg-card);
-}
+.scout-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 14px 14px; overflow: hidden; background: var(--bg-card); }
 
-/* ─── MATCHUP ─────────────────────────────────── */
-.matchup-grid {
-  display: grid; grid-template-columns: 1fr 40px 1fr;
-  gap: 8px; align-items: end; margin-bottom: 16px;
-}
-.vs-badge {
-  text-align: center; padding-bottom: 10px;
-  font-family: var(--font-cond); font-size: 12px; font-weight: 900;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--text-3);
-}
-.field label {
-  display: block; font-family: var(--font-cond); font-size: 10px;
-  font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--text-3); margin-bottom: 6px;
-}
-select.field-sel {
-  width: 100%; background: var(--bg-raised);
-  border: 1px solid var(--border-hi); color: var(--text-1);
-  padding: 10px 30px 10px 12px; border-radius: 10px;
-  font-size: 13px; font-weight: 600; appearance: none;
-  cursor: pointer; outline: none; transition: border-color .15s;
+.matchup-grid { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 8px; align-items: end; margin-bottom: 16px; }
+.vs-badge { text-align: center; padding-bottom: 10px; font-family: var(--font-cond); font-size: 12px;
+  font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.field label { display: block; font-family: var(--font-cond); font-size: 10px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+select.field-sel { width: 100%; background: var(--bg-raised); border: 1px solid var(--border-hi);
+  color: var(--text-1); padding: 10px 30px 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  appearance: none; cursor: pointer; outline: none; transition: border-color .15s;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23525670' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 10px center;
-}
-select.field-sel:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); outline: none; }
+  background-repeat: no-repeat; background-position: right 10px center; }
+select.field-sel:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
 select.field-sel option { background: var(--bg-raised); }
 .matchup-banners { display: flex; gap: 8px; margin-bottom: 16px; }
-.matchup-banner {
-  flex: 1; padding: 12px 14px;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  border-radius: 10px; display: flex; align-items: center; gap: 10px;
-}
+.matchup-banner { flex: 1; padding: 12px 14px; background: var(--bg-raised); border: 1px solid var(--border);
+  border-radius: 10px; display: flex; align-items: center; gap: 10px; }
 .matchup-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 .matchup-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
 
-/* ─── EMPTY / ERROR ───────────────────────────── */
 .empty { text-align: center; padding: 56px 24px; color: var(--text-3); font-size: 13.5px; font-weight: 500; }
-.empty-icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
-.error-card {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px; background: var(--red-dim);
-  border: 1px solid rgba(255,71,87,.2); border-radius: 12px;
-  color: var(--red); font-size: 13.5px; font-weight: 600;
-}
-
-/* ─── DIVIDER ─────────────────────────────────── */
+.error-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--red-dim);
+  border: 1px solid rgba(255,71,87,.2); border-radius: 12px; color: var(--red); font-size: 13.5px; font-weight: 600; }
 .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
-/* ─── RESPONSIVE: HIDE ODDS BAR ON SMALL ─────── */
+/* ── NEW: queue banner ── */
+.queue-banner { display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+  background: rgba(123,94,167,.12); border: 1px solid rgba(123,94,167,.25); border-radius: 12px;
+  color: #a78bcc; font-size: 13px; font-weight: 600; }
+
 @media (max-width: 420px) {
   .odds-bar-track { display: none; }
   .matchup-grid { grid-template-columns: 1fr; }
   .vs-badge { display: none; }
 }
 
-/* ─── SPLASH SCREEN ───────────────────────────── */
-.splash {
-  position: fixed; inset: 0; z-index: 999;
-  background: var(--bg);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 32px 24px;
-  animation: fadeUp .3s ease;
-}
+.splash { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex;
+  flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; animation: fadeUp .3s ease; }
 .splash.hidden { display: none; }
-
-.splash-bg {
-  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
-}
-.splash-bg::before {
-  content: '';
-  position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(0,212,170,.08) 0%, transparent 65%);
-}
-.splash-bg::after {
-  content: '';
-  position: absolute; bottom: -10%; right: -10%;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(123,94,167,.07) 0%, transparent 65%);
-}
-
-.splash-inner {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column;
-  align-items: center; text-align: center;
-  max-width: 360px; width: 100%;
-}
-
-.splash-logo {
-  width: 72px; height: 72px; border-radius: 20px;
-  background: linear-gradient(135deg, var(--cyan), #00a884);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-cond); font-size: 28px; font-weight: 900;
-  color: #13151c; letter-spacing: .02em;
-  box-shadow: 0 0 40px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4);
-  margin-bottom: 24px;
-  animation: glow 3s ease-in-out infinite;
-}
-@keyframes glow {
-  0%,100% { box-shadow: 0 0 30px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4); }
-  50%      { box-shadow: 0 0 60px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4); }
-}
-
-.splash-league {
-  font-family: var(--font-cond); font-size: 11px; font-weight: 800;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--cyan); margin-bottom: 10px;
-}
-.splash-title {
-  font-family: var(--font-cond); font-size: 36px; font-weight: 900;
-  letter-spacing: .02em; text-transform: uppercase;
-  color: var(--text-1); line-height: 1.05; margin-bottom: 6px;
-}
-.splash-season {
-  font-family: var(--font-cond); font-size: 22px; font-weight: 700;
-  color: var(--text-3); letter-spacing: .06em; margin-bottom: 16px;
-}
-.splash-desc {
-  font-size: 14px; color: var(--text-3); font-weight: 500;
-  line-height: 1.6; margin-bottom: 40px;
-  padding: 0 8px;
-}
-
-.splash-btn {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  width: 100%; padding: 16px 24px; border-radius: 14px;
-  background: var(--cyan); color: #13151c;
-  font-family: var(--font-cond); font-size: 17px; font-weight: 900;
-  letter-spacing: .06em; text-transform: uppercase;
-  border: none; cursor: pointer; text-decoration: none;
-  box-shadow: 0 4px 24px var(--cyan-glow);
-  transition: all .2s; margin-bottom: 12px;
-}
+.splash-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.splash-bg::before { content: ''; position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,212,170,.08) 0%, transparent 65%); }
+.splash-bg::after { content: ''; position: absolute; bottom: -10%; right: -10%; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(123,94,167,.07) 0%, transparent 65%); }
+.splash-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 360px; width: 100%; }
+.splash-logo { width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, var(--cyan), #00a884);
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-cond); font-size: 28px;
+  font-weight: 900; color: #13151c; letter-spacing: .02em;
+  box-shadow: 0 0 40px var(--cyan-glow), 0 8px 32px rgba(0,0,0,.4); margin-bottom: 24px; animation: glow 3s ease-in-out infinite; }
+.splash-league { font-family: var(--font-cond); font-size: 11px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--cyan); margin-bottom: 10px; }
+.splash-title { font-family: var(--font-cond); font-size: 36px; font-weight: 900; letter-spacing: .02em;
+  text-transform: uppercase; color: var(--text-1); line-height: 1.05; margin-bottom: 6px; }
+.splash-season { font-family: var(--font-cond); font-size: 22px; font-weight: 700; color: var(--text-3); letter-spacing: .06em; margin-bottom: 16px; }
+.splash-desc { font-size: 14px; color: var(--text-3); font-weight: 500; line-height: 1.6; margin-bottom: 40px; padding: 0 8px; }
+.splash-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;
+  padding: 16px 24px; border-radius: 14px; background: var(--cyan); color: #13151c;
+  font-family: var(--font-cond); font-size: 17px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+  border: none; cursor: pointer; text-decoration: none; box-shadow: 0 4px 24px var(--cyan-glow); transition: all .2s; margin-bottom: 12px; }
 .splash-btn:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 8px 32px var(--cyan-glow); }
-.splash-btn:active { transform: none; filter: none; }
-
-.splash-btn-icon {
-  width: 28px; height: 28px; border-radius: 8px;
-  background: rgba(19,21,28,.2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
-}
-
-.splash-note {
-  font-size: 11.5px; color: var(--text-3); font-weight: 500;
-  line-height: 1.5;
-}
-
-.splash-stats {
-  display: flex; gap: 24px; margin-bottom: 40px;
-}
-.splash-stat {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-}
-.splash-stat-val {
-  font-family: var(--font-cond); font-size: 22px; font-weight: 900;
-  color: var(--text-1); letter-spacing: .02em;
-}
-.splash-stat-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--text-3);
-}
+.splash-btn-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(19,21,28,.2);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.splash-note { font-size: 11.5px; color: var(--text-3); font-weight: 500; line-height: 1.5; }
+.splash-stats { display: flex; gap: 24px; margin-bottom: 40px; }
+.splash-stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.splash-stat-val { font-family: var(--font-cond); font-size: 22px; font-weight: 900; color: var(--text-1); letter-spacing: .02em; }
+.splash-stat-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
 </style>
 </head>
 <body>
 
-<!-- SPLASH SCREEN (shown when not authenticated) -->
 <div class="splash hidden" id="splash">
   <div class="splash-bg"></div>
   <div class="splash-inner">
@@ -522,18 +233,9 @@ select.field-sel option { background: var(--bg-raised); }
     <div class="splash-title">2026 Season</div>
     <div class="splash-season">Prediction Hub</div>
     <div class="splash-stats">
-      <div class="splash-stat">
-        <span class="splash-stat-val">18</span>
-        <span class="splash-stat-label">Teams</span>
-      </div>
-      <div class="splash-stat">
-        <span class="splash-stat-val">11</span>
-        <span class="splash-stat-label">Seasons</span>
-      </div>
-      <div class="splash-stat">
-        <span class="splash-stat-val">AI</span>
-        <span class="splash-stat-label">Powered</span>
-      </div>
+      <div class="splash-stat"><span class="splash-stat-val">18</span><span class="splash-stat-label">Teams</span></div>
+      <div class="splash-stat"><span class="splash-stat-val">11</span><span class="splash-stat-label">Seasons</span></div>
+      <div class="splash-stat"><span class="splash-stat-val">AI</span><span class="splash-stat-label">Powered</span></div>
     </div>
     <p class="splash-desc">Connect your Yahoo Fantasy account to load live rosters and unlock AI-powered predictions, odds, and scouting reports.</p>
     <a href="/auth/login" class="splash-btn">
@@ -544,18 +246,14 @@ select.field-sel option { background: var(--bg-raised); }
   </div>
 </div>
 
-<!-- TOP BAR -->
 <header class="topbar">
   <div class="topbar-brand">
     <div class="topbar-logo">DH</div>
-    <div>
-      <div class="topbar-title">Dynasty Heroes</div>
-    </div>
+    <div><div class="topbar-title">Dynasty Heroes</div></div>
   </div>
   <span class="topbar-season">2026</span>
 </header>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-label"><span class="live-dot"></span> AI-Powered Analysis</div>
   <h1 class="hero-h1">Season Predictions</h1>
@@ -565,7 +263,6 @@ select.field-sel option { background: var(--bg-raised); }
   </div>
 </div>
 
-<!-- PAGE CONTENT -->
 <div class="page" id="page">
   <div class="loading-state">
     <div class="spinner spinner-lg"></div>
@@ -573,34 +270,25 @@ select.field-sel option { background: var(--bg-raised); }
   </div>
 </div>
 
-<!-- BOTTOM TAB BAR -->
 <nav class="tabbar">
   <button class="tab-btn active" onclick="showTab('standings',this)">
-    <div class="tab-icon">🏆</div>
-    <span class="tab-label">Standings</span>
+    <div class="tab-icon">🏆</div><span class="tab-label">Standings</span>
   </button>
   <button class="tab-btn" onclick="showTab('odds',this)">
-    <div class="tab-icon">📊</div>
-    <span class="tab-label">Odds</span>
+    <div class="tab-icon">📊</div><span class="tab-label">Odds</span>
   </button>
   <button class="tab-btn" onclick="showTab('previews',this)">
-    <div class="tab-icon">📋</div>
-    <span class="tab-label">Teams</span>
+    <div class="tab-icon">📋</div><span class="tab-label">Teams</span>
   </button>
   <button class="tab-btn" onclick="showTab('h2h',this)">
-    <div class="tab-icon">⚔️</div>
-    <span class="tab-label">H2H</span>
+    <div class="tab-icon">⚔️</div><span class="tab-label">H2H</span>
   </button>
   <button class="tab-btn" onclick="showTab('bold',this)">
-    <div class="tab-icon">🎯</div>
-    <span class="tab-label">Bold</span>
+    <div class="tab-icon">🎯</div><span class="tab-label">Bold</span>
   </button>
 </nav>
 
-<!-- APP TEMPLATE -->
 <template id="app-tpl">
-
-  <!-- STANDINGS -->
   <div id="panel-standings" class="panel active">
     <div class="sec-head">
       <div class="sec-title">Predicted Standings</div>
@@ -615,7 +303,6 @@ select.field-sel option { background: var(--bg-raised); }
     <div id="out-standings"></div>
   </div>
 
-  <!-- ODDS -->
   <div id="panel-odds" class="panel">
     <div class="sec-head">
       <div class="sec-title">Championship Odds</div>
@@ -630,7 +317,6 @@ select.field-sel option { background: var(--bg-raised); }
     <div id="out-odds"></div>
   </div>
 
-  <!-- PREVIEWS -->
   <div id="panel-previews" class="panel">
     <div class="sec-head">
       <div class="sec-title">Scouting Reports</div>
@@ -640,22 +326,15 @@ select.field-sel option { background: var(--bg-raised); }
     <div id="out-previews"></div>
   </div>
 
-  <!-- H2H -->
   <div id="panel-h2h" class="panel">
     <div class="sec-head">
       <div class="sec-title">Head-to-Head</div>
       <div class="sec-sub">Category-by-category matchup prediction</div>
     </div>
     <div class="matchup-grid">
-      <div class="field">
-        <label>Team A</label>
-        <select class="field-sel" id="sel-a"></select>
-      </div>
+      <div class="field"><label>Team A</label><select class="field-sel" id="sel-a"></select></div>
       <div class="vs-badge">vs</div>
-      <div class="field">
-        <label>Team B</label>
-        <select class="field-sel" id="sel-b"></select>
-      </div>
+      <div class="field"><label>Team B</label><select class="field-sel" id="sel-b"></select></div>
     </div>
     <div class="action-row">
       <button class="btn btn-primary btn-full" id="btn-h2h" onclick="runH2H()">
@@ -666,7 +345,6 @@ select.field-sel option { background: var(--bg-raised); }
     <div id="out-h2h"></div>
   </div>
 
-  <!-- BOLD -->
   <div id="panel-bold" class="panel">
     <div class="sec-head">
       <div class="sec-title">Bold Predictions</div>
@@ -680,162 +358,174 @@ select.field-sel option { background: var(--bg-raised); }
     </div>
     <div id="out-bold"></div>
   </div>
-
 </template>
 
 <script>
 const TEAM_COLORS = {
-  1:'#2563eb',2:'#dc2626',3:'#db2777',4:'#92400e',
-  5:'#7c3aed',6:'#f97316',7:'#9333ea',8:'#d97706',
-  9:'#16a34a',10:'#059669',11:'#64748b',12:'#be123c',
-  13:'#0ea5e9',14:'#1d4ed8',15:'#15803d',16:'#0891b2',
-  17:'#ca8a04',18:'#475569'
+  1:'#2563eb',2:'#dc2626',3:'#db2777',4:'#92400e',5:'#7c3aed',6:'#f97316',
+  7:'#9333ea',8:'#d97706',9:'#16a34a',10:'#059669',11:'#64748b',12:'#be123c',
+  13:'#0ea5e9',14:'#1d4ed8',15:'#15803d',16:'#0891b2',17:'#ca8a04',18:'#475569'
 };
-
 let ROSTERS = {}, TEAMS = [], loadedAt = null;
 
-// ── LOAD ROSTERS ─────────────────────────────────────────────────────────────
 async function loadRosters() {
   try {
     const ids = Array.from({length:18},(_,i)=>i+1);
-    const results = await Promise.all(
-      ids.map(id => fetch(`/api/teams/${id}/roster`).then(r=>r.json()).catch(()=>null))
-    );
-    results.forEach((data,idx) => {
-      if (!data || !data.team_name) return;
-      const id = ids[idx];
-      const players = (data.players||[]).map(p => {
-        const pos = Array.isArray(p.eligible_positions)
-          ? p.eligible_positions.filter(x=>!['BN','DL','NA'].includes(x)).slice(0,2).join('/')
-          : (p.position||'');
+    const results = await Promise.all(ids.map(id=>fetch(`/api/teams/${id}/roster`).then(r=>r.json()).catch(()=>null)));
+    results.forEach((data,idx)=>{
+      if(!data||!data.team_name) return;
+      const id=ids[idx];
+      const players=(data.players||[]).map(p=>{
+        const pos=Array.isArray(p.eligible_positions)?p.eligible_positions.filter(x=>!['BN','DL','NA'].includes(x)).slice(0,2).join('/'):(p.position||'');
         return `${p.name}${pos?' ('+pos+')':''}`;
       });
-      ROSTERS[data.team_name] = { color: TEAM_COLORS[id]||'#64748b', players };
+      ROSTERS[data.team_name]={color:TEAM_COLORS[id]||'#64748b',players};
     });
-    TEAMS = Object.keys(ROSTERS);
-    loadedAt = new Date();
-    return TEAMS.length > 0;
-  } catch { return false; }
+    TEAMS=Object.keys(ROSTERS); loadedAt=new Date(); return TEAMS.length>0;
+  } catch{return false;}
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-  const ok = await loadRosters();
-  const page = document.getElementById('page');
-  if (!ok || !TEAMS.length) {
+  const ok=await loadRosters();
+  const page=document.getElementById('page');
+  if(!ok||!TEAMS.length){
     document.getElementById('splash').classList.remove('hidden');
-    document.querySelector('.topbar').style.display = 'none';
-    document.querySelector('.hero').style.display = 'none';
-    document.querySelector('.tabbar').style.display = 'none';
-    document.body.style.paddingBottom = '0';
-    page.style.display = 'none';
-    return;
+    document.querySelector('.topbar').style.display='none';
+    document.querySelector('.hero').style.display='none';
+    document.querySelector('.tabbar').style.display='none';
+    document.body.style.paddingBottom='0';
+    page.style.display='none'; return;
   }
-  document.getElementById('hero-meta').innerHTML = `
+  document.getElementById('hero-meta').innerHTML=`
     <span class="meta-chip live">● ${TEAMS.length} teams loaded</span>
     <span class="meta-chip">Live · Yahoo Fantasy</span>
     <span class="meta-chip">Updated ${loadedAt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`;
-  page.innerHTML = '';
+  page.innerHTML='';
   page.appendChild(document.getElementById('app-tpl').content.cloneNode(true));
-  buildChips();
-  buildSelects();
+  buildChips(); buildSelects();
 }
 
 function buildChips() {
-  const c = document.getElementById('team-chips');
-  TEAMS.forEach(name => {
-    const b = document.createElement('button');
-    b.className = 'chip'; b.textContent = name;
-    b.onclick = () => selectTeam(name, b);
-    c.appendChild(b);
+  const c=document.getElementById('team-chips');
+  TEAMS.forEach(name=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=name;
+    b.onclick=()=>selectTeam(name,b); c.appendChild(b);
   });
 }
-
 function buildSelects() {
-  ['sel-a','sel-b'].forEach((id,i) => {
-    const s = document.getElementById(id);
-    TEAMS.forEach(name => {
-      const o = document.createElement('option');
-      o.value = name; o.textContent = name; s.appendChild(o);
-    });
-    const defaults = ['Good Wood','L7 Weenies'];
-    s.value = TEAMS.includes(defaults[i]) ? defaults[i] : TEAMS[i]||TEAMS[0];
+  ['sel-a','sel-b'].forEach((id,i)=>{
+    const s=document.getElementById(id);
+    TEAMS.forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;s.appendChild(o);});
+    const defaults=['Good Wood','L7 Weenies'];
+    s.value=TEAMS.includes(defaults[i])?defaults[i]:TEAMS[i]||TEAMS[0];
   });
 }
-
-// ── NAV ───────────────────────────────────────────────────────────────────────
-function showTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function showTab(id,btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   btn.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// ── CLAUDE API ────────────────────────────────────────────────────────────────
-async function callClaude(prompt, outputEl, btnEl, stream=true, retries=3, model='llama-3.3-70b-versatile') {
-  if (btnEl) { btnEl.disabled=true; btnEl.textContent='Analyzing…'; }
-  outputEl.innerHTML = `<div class="thinking"><div class="spinner"></div> Analyzing rosters…</div>`;
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      const res = await fetch('/api/groq', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model, max_tokens:4096, stream, messages:[{role:'system',content:'You are a brutally honest fantasy baseball analyst. When grading teams, use the FULL A+ through F scale. Most teams are average (C). Only elite rosters deserve A grades. Weak rosters with bad players deserve D or F. Do not inflate grades.'},{role:'user',content:prompt}] })
+// ── SHARED RATE-LIMIT QUEUE ──────────────────────────────────────────────────
+const groqQueue = [];
+let groqBusy = false;
+let groqCoolUntil = 0;
+
+async function processGroqQueue() {
+  if (groqBusy) return;
+  groqBusy = true;
+  while (groqQueue.length > 0) {
+    const now = Date.now();
+    if (groqCoolUntil > now) {
+      const wait = groqCoolUntil - now;
+      groqQueue.forEach(({outputEl}) => {
+        outputEl.innerHTML = `<div class="thinking"><div class="spinner"></div> Rate limit cooldown… ${Math.ceil(wait/1000)}s remaining</div>`;
       });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        const isRateLimit = res.status === 429 || res.status === 500 && errBody?.error?.includes?.('429');
-        if (isRateLimit && attempt < retries - 1) {
-          const wait = (attempt + 1) * 8;
-          outputEl.innerHTML = `<div class="thinking"><div class="spinner"></div> Rate limited — retrying in ${wait}s… (${attempt+1}/${retries})</div>`;
-          await new Promise(r => setTimeout(r, wait * 1000));
-          continue;
-        }
-        outputEl.innerHTML = `<div class="plain" style="color:var(--text-3);padding:16px">⚠️ ${isRateLimit ? 'Rate limited by Groq. Wait a minute and try again.' : `Error: ${errBody?.error || res.status}`}</div>`;
-        if (btnEl){btnEl.disabled=false; btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
-        return '';
-      }
-      if (stream) {
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        let full = '';
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `<div class="card-header"><span class="card-label">Analysis</span></div><div class="card-body"></div>`;
-        outputEl.innerHTML = '';
-        outputEl.appendChild(card);
-        const body = card.querySelector('.card-body');
-        while(true) {
-          const {done,value} = await reader.read(); if(done) break;
-          for(const line of dec.decode(value).split('\n')) {
-            if(!line.startsWith('data: ')) continue;
-            const d = line.slice(6); if(d==='[DONE]') break;
-            try {
-              const j = JSON.parse(d);
-              const chunk = j.choices?.[0]?.delta?.content;
-              if(chunk){ full += chunk; body.innerHTML = md(full); }
-            } catch{}
+      await new Promise(r => setTimeout(r, wait));
+    }
+    const task = groqQueue.shift();
+    await task.run();
+    if (groqQueue.length > 0) await new Promise(r => setTimeout(r, 1500));
+  }
+  groqBusy = false;
+}
+
+async function callClaude(prompt, outputEl, btnEl, stream=true, retries=3, model='llama-3.3-70b-versatile') {
+  if (btnEl) { btnEl.disabled=true; btnEl.textContent='In queue…'; }
+  const queuePos = groqQueue.length;
+  outputEl.innerHTML = queuePos > 0
+    ? `<div class="queue-banner"><div class="spinner"></div> Queued (#${queuePos+1}) — waiting for previous request…</div>`
+    : `<div class="thinking"><div class="spinner"></div> Analyzing rosters…</div>`;
+
+  return new Promise(resolve => {
+    groqQueue.push({
+      outputEl,
+      run: async () => {
+        if (btnEl) { btnEl.disabled=true; btnEl.textContent='Analyzing…'; }
+        outputEl.innerHTML = `<div class="thinking"><div class="spinner"></div> Analyzing rosters…</div>`;
+        for (let attempt=0; attempt<retries; attempt++) {
+          try {
+            const res = await fetch('/api/groq', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                model, max_tokens:4096, stream,
+                messages:[
+                  {role:'system',content:'You are a brutally honest fantasy baseball analyst. When grading teams, use the FULL A+ through F scale. Most teams are average (C). Only elite rosters deserve A grades. Weak rosters with bad players deserve D or F. Do not inflate grades.'},
+                  {role:'user',content:prompt}
+                ]
+              })
+            });
+            if (!res.ok) {
+              const errBody = await res.json().catch(()=>({}));
+              const isRL = res.status===429||(res.status===500&&errBody?.error?.includes?.('429'));
+              if (isRL && attempt<retries-1) {
+                const retryAfter = parseInt(res.headers.get('retry-after')||'0');
+                const wait = retryAfter>0 ? retryAfter*1000 : (attempt+1)*10000;
+                groqCoolUntil = Date.now()+wait;
+                outputEl.innerHTML=`<div class="thinking"><div class="spinner"></div> Rate limited — cooling down ${Math.ceil(wait/1000)}s… (${attempt+1}/${retries})</div>`;
+                await new Promise(r=>setTimeout(r,wait)); continue;
+              }
+              outputEl.innerHTML=`<div class="plain" style="color:var(--text-3);padding:16px">⚠️ ${isRL?'Rate limited by Groq. Wait a moment and try again.':`Error: ${errBody?.error||res.status}`}</div>`;
+              if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
+              resolve(''); return;
+            }
+            if (stream) {
+              const reader=res.body.getReader(), dec=new TextDecoder(); let full='';
+              const card=document.createElement('div'); card.className='card';
+              card.innerHTML=`<div class="card-header"><span class="card-label">Analysis</span></div><div class="card-body"></div>`;
+              outputEl.innerHTML=''; outputEl.appendChild(card);
+              const body=card.querySelector('.card-body');
+              while(true){
+                const{done,value}=await reader.read(); if(done) break;
+                for(const line of dec.decode(value).split('\n')){
+                  if(!line.startsWith('data: ')) continue;
+                  const d=line.slice(6); if(d==='[DONE]') break;
+                  try{const j=JSON.parse(d);const chunk=j.choices?.[0]?.delta?.content;if(chunk){full+=chunk;body.innerHTML=md(full);}}catch{}
+                }
+              }
+              if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
+              resolve(full); return;
+            } else {
+              const data=await res.json();
+              if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
+              resolve(data.choices?.[0]?.message?.content||''); return;
+            }
+          } catch(e) {
+            if(attempt===retries-1) outputEl.innerHTML=`<div class="plain" style="color:var(--text-3);padding:16px">⚠️ Network error: ${e.message}</div>`;
           }
         }
-        if (btnEl){btnEl.disabled=false; btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
-        return full;
-      } else {
-        const data = await res.json();
-        if (btnEl){btnEl.disabled=false; btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
-        return data.choices?.[0]?.message?.content || '';
+        if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
+        resolve('');
       }
-    } catch(e) {
-      if (attempt === retries - 1) {
-        outputEl.innerHTML = `<div class="plain" style="color:var(--text-3);padding:16px">⚠️ Network error: ${e.message}</div>`;
-      }
-    }
-  }
-  if (btnEl){btnEl.disabled=false; btnEl.textContent=btnEl.dataset.label||'↺ Regenerate';}
-  return '';
+    });
+    processGroqQueue();
+  });
 }
 
 function md(text) {
-  return text.split('\n').map(line => {
+  return text.split('\n').map(line=>{
     if(line.startsWith('# ')) return `<div class="h1">${esc(line.slice(2))}</div>`;
     if(line.startsWith('## ')) return `<div class="h2">${esc(line.slice(3))}</div>`;
     if(/^\*\*(.+)\*\*$/.test(line)) return `<div class="bold">${esc(line.replace(/\*\*/g,''))}</div>`;
@@ -845,268 +535,181 @@ function md(text) {
     return `<div class="plain">${esc(line)}</div>`;
   }).join('');
 }
-
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+function esc(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 }
+function roster(name,n=8){return `${name}: ${(ROSTERS[name]?.players||[]).slice(0,n).join(', ')}`;}
 
-function roster(name, n=8) {
-  return `${name}: ${(ROSTERS[name]?.players||[]).slice(0,n).join(', ')}`;
-}
-
-// ── STANDINGS ─────────────────────────────────────────────────────────────────
+// ── STANDINGS ────────────────────────────────────────────────────────────────
 async function runStandings() {
-  const btn = document.getElementById('btn-standings');
-  btn.dataset.label = '↺ Regenerate';
-  const out = document.getElementById('out-standings');
-  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 rankings…</div>`;
-  btn.disabled = true; btn.textContent = 'Loading…';
-
+  const btn=document.getElementById('btn-standings'); btn.dataset.label='↺ Regenerate';
+  const out=document.getElementById('out-standings');
+  out.innerHTML=`<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 rankings…</div>`;
+  btn.disabled=true; btn.textContent='Loading…';
   try {
-    // Step 1: fetch Yahoo rank scores (same logic as Odds tab)
-    const rankMap = {};
-    for(let start=0; start<500; start+=25) {
-      const r = await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
-      const d = await r.json();
-      const players = d?.fantasy_content?.league?.[1]?.players;
-      const count = players?.count || 0;
-      if(count === 0) break;
+    const rankMap={};
+    for(let start=0;start<500;start+=25){
+      const r=await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
+      const d=await r.json();
+      const players=d?.fantasy_content?.league?.[1]?.players; const count=players?.count||0;
+      if(count===0) break;
       for(let i=0;i<count;i++){
-        const p = players[i]?.player;
-        if(!p) continue;
-        const info = Array.isArray(p[0]) ? p[0] : [];
-        const name = info.find(x=>x?.name)?.name?.full;
-        if(!name) continue;
-        const rankList = p[1]?.player_ranks || [];
-        const rank2026 = rankList.find(r=>r?.player_rank?.rank_type==='S' && r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
-        const rankOR = rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
-        const rank = parseInt(rank2026) || parseInt(rankOR) || 9999;
-        rankMap[name.toLowerCase()] = rank;
-        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] = rank;
+        const p=players[i]?.player; if(!p) continue;
+        const info=Array.isArray(p[0])?p[0]:[];
+        const name=info.find(x=>x?.name)?.name?.full; if(!name) continue;
+        const rankList=p[1]?.player_ranks||[];
+        const rank2026=rankList.find(r=>r?.player_rank?.rank_type==='S'&&r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
+        const rankOR=rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
+        const rank=parseInt(rank2026)||parseInt(rankOR)||9999;
+        rankMap[name.toLowerCase()]=rank;
+        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()]=rank;
       }
-      if(count < 25) break;
+      if(count<25) break;
     }
-
-    // Step 2: score each team (sum of top-14 ranks, lower = better)
-    const scores = {};
-    for(const teamName of TEAMS) {
-      const players = ROSTERS[teamName]?.players || [];
-      const playerRanks = players.map(p => rankMap[p.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] || 600);
-      playerRanks.sort((a,b)=>a-b);
-      scores[teamName] = playerRanks.slice(0,14).reduce((s,r)=>s+r, 0);
+    const scores={};
+    for(const teamName of TEAMS){
+      const players=ROSTERS[teamName]?.players||[];
+      const pr=players.map(p=>rankMap[p.replace(/\s*\(.*?\)/,'').trim().toLowerCase()]||600);
+      pr.sort((a,b)=>a-b); scores[teamName]=pr.slice(0,14).reduce((s,r)=>s+r,0);
     }
-
-    // Step 3: sort teams by score ascending (lower = better)
-    const sorted = Object.entries(scores).sort((a,b)=>a[1]-b[1]);
-    const contenders = sorted.slice(0,6);
-    const bubble = sorted.slice(6,12);
-    const rebuilding = sorted.slice(12);
-
-    // Step 4: small AI prompt — just write one punchy sentence per team
-    // Include only top-5 players per team to keep tokens low
-    const teamLines = sorted.map(([name],i) => `${i+1}. ${name}: ${(ROSTERS[name]?.players||[]).slice(0,5).join(', ')}`).join('\n');
-    out.innerHTML = `<div class="thinking"><div class="spinner"></div> Writing analysis…</div>`;
-
-    const result = await callClaude(
+    const sorted=Object.entries(scores).sort((a,b)=>a[1]-b[1]);
+    const contenders=sorted.slice(0,6), bubble=sorted.slice(6,12), rebuilding=sorted.slice(12);
+    const teamLines=sorted.map(([name],i)=>`${i+1}. ${name}: ${(ROSTERS[name]?.players||[]).slice(0,5).join(', ')}`).join('\n');
+    out.innerHTML=`<div class="thinking"><div class="spinner"></div> Writing analysis…</div>`;
+    const result=await callClaude(
       `These 18 Dynasty Heroes fantasy teams are already ranked 1-18 by Yahoo's official 2026 preseason player rankings. Do NOT re-order them. Just write one sharp, opinionated sentence for each team explaining why they land where they do. Reference specific player names. League scores: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG / W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS.\n\nFormat each line as: [rank]. [Team]: [one sentence]\n\n${teamLines}`,
       out, btn, false, 3, 'llama-3.3-70b-versatile'
     );
-
-    if (!result) return;
-
-    // Step 5: render tiered standings card
-    const lineMap = {};
-    result.split('\n').forEach(line => {
-      const m = line.match(/^(\d+)\.\s*(.+?):\s*(.+)/);
-      if(m) lineMap[m[2].trim()] = m[3].trim();
-    });
-
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `<div class="card-header"><span class="card-label">Predicted Standings</span><span class="card-label" style="opacity:.5">Yahoo 2026 Rankings</span></div><div class="card-body" style="padding:0"></div>`;
-    const body = card.querySelector('.card-body');
-
-    const renderTier = (label, teams, startRank) => {
-      const section = document.createElement('div');
-      section.style.cssText = 'padding:14px 18px 8px';
-      section.innerHTML = `<div class="h1" style="margin:0 0 10px">${label}</div>`;
-      teams.forEach(([name, score], i) => {
-        const color = ROSTERS[name]?.color || '#64748b';
-        const rank = startRank + i;
-        const blurb = lineMap[name] || '';
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin-bottom:12px';
-        row.innerHTML = `
-          <span style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--text-3);min-width:22px;padding-top:2px">#${rank}</span>
+    if(!result) return;
+    const lineMap={};
+    result.split('\n').forEach(line=>{const m=line.match(/^(\d+)\.\s*(.+?):\s*(.+)/);if(m) lineMap[m[2].trim()]=m[3].trim();});
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<div class="card-header"><span class="card-label">Predicted Standings</span><span class="card-label" style="opacity:.5">Yahoo 2026 Rankings</span></div><div class="card-body" style="padding:0"></div>`;
+    const body=card.querySelector('.card-body');
+    const renderTier=(label,teams,startRank)=>{
+      const section=document.createElement('div'); section.style.cssText='padding:14px 18px 8px';
+      section.innerHTML=`<div class="h1" style="margin:0 0 10px">${label}</div>`;
+      teams.forEach(([name],i)=>{
+        const color=ROSTERS[name]?.color||'#64748b', rank=startRank+i, blurb=lineMap[name]||'';
+        const row=document.createElement('div'); row.style.cssText='display:flex;gap:10px;align-items:flex-start;margin-bottom:12px';
+        row.innerHTML=`<span style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--text-3);min-width:22px;padding-top:2px">#${rank}</span>
           <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px"></span>
-          <div>
-            <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--text-1)">${name}</div>
-            <div style="font-size:13px;color:var(--text-2);line-height:1.5">${blurb}</div>
-          </div>`;
+          <div><div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--text-1)">${name}</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.5">${blurb}</div></div>`;
         section.appendChild(row);
       });
       body.appendChild(section);
     };
-
-    renderTier('🏆 Championship Contenders', contenders, 1);
-    renderTier('⚔️ Playoff Bubble', bubble, 7);
-    renderTier('🔧 Rebuilding', rebuilding, 13);
-
-    out.innerHTML = '';
-    out.appendChild(card);
-  } catch(e) {
-    out.innerHTML = `<div class="error-card">Error: ${e.message}</div>`;
-  }
-  btn.disabled = false; btn.textContent = '↺ Regenerate';
+    renderTier('🏆 Championship Contenders',contenders,1);
+    renderTier('⚔️ Playoff Bubble',bubble,7);
+    renderTier('🔧 Rebuilding',rebuilding,13);
+    out.innerHTML=''; out.appendChild(card);
+  } catch(e){out.innerHTML=`<div class="error-card">Error: ${e.message}</div>`;}
+  btn.disabled=false; btn.textContent='↺ Regenerate';
 }
 
 // ── ODDS ──────────────────────────────────────────────────────────────────────
 async function runOdds() {
-  const btn = document.getElementById('btn-odds');
-  btn.dataset.label = '↺ Regenerate';
-  const out = document.getElementById('out-odds');
-  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 player rankings…</div>`;
+  const btn=document.getElementById('btn-odds'); btn.dataset.label='↺ Regenerate';
+  const out=document.getElementById('out-odds');
+  out.innerHTML=`<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 player rankings…</div>`;
   btn.disabled=true; btn.textContent='Calculating…';
   try {
-    // Fetch all rostered players with Yahoo's official 2026 preseason ranks
-    const rankMap = {};
-    for(let start=0; start<500; start+=25) {
-      const r = await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
-      const d = await r.json();
-      const players = d?.fantasy_content?.league?.[1]?.players;
-      const count = players?.count || 0;
-      if(count === 0) break;
+    const rankMap={};
+    for(let start=0;start<500;start+=25){
+      const r=await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
+      const d=await r.json();
+      const players=d?.fantasy_content?.league?.[1]?.players; const count=players?.count||0;
+      if(count===0) break;
       for(let i=0;i<count;i++){
-        const p = players[i]?.player;
-        if(!p) continue;
-        const info = Array.isArray(p[0]) ? p[0] : [];
-        const name = info.find(x=>x?.name)?.name?.full;
-        if(!name) continue;
-        const rankList = p[1]?.player_ranks || [];
-        const rank2026 = rankList.find(r=>r?.player_rank?.rank_type==='S' && r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
-        const rankOR = rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
-        const rank = parseInt(rank2026) || parseInt(rankOR) || 9999;
-        rankMap[name.toLowerCase()] = rank;
-        // also index without suffixes like "(Batter)"
-        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] = rank;
+        const p=players[i]?.player; if(!p) continue;
+        const info=Array.isArray(p[0])?p[0]:[];
+        const name=info.find(x=>x?.name)?.name?.full; if(!name) continue;
+        const rankList=p[1]?.player_ranks||[];
+        const rank2026=rankList.find(r=>r?.player_rank?.rank_type==='S'&&r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
+        const rankOR=rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
+        const rank=parseInt(rank2026)||parseInt(rankOR)||9999;
+        rankMap[name.toLowerCase()]=rank;
+        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()]=rank;
       }
-      if(count < 25) break;
+      if(count<25) break;
     }
-
-    // Score each team: sum of top-14 player ranks (lower = better)
-    const scores = {};
-    for(const teamName of TEAMS) {
-      const data = ROSTERS[teamName];
-      if(!data) continue;
-      const playerRanks = data.players.map(p => {
-        const clean = p.replace(/\s*\(.*?\)/,'').trim().toLowerCase();
-        return rankMap[clean] || 600;
-      });
-      playerRanks.sort((a,b)=>a-b);
-      scores[teamName] = playerRanks.slice(0,14).reduce((s,r)=>s+r, 0);
+    const scores={};
+    for(const teamName of TEAMS){
+      const data=ROSTERS[teamName]; if(!data) continue;
+      const pr=data.players.map(p=>rankMap[p.replace(/\s*\(.*?\)/,'').trim().toLowerCase()]||600);
+      pr.sort((a,b)=>a-b); scores[teamName]=pr.slice(0,14).reduce((s,r)=>s+r,0);
     }
-
-    // Convert scores to win probabilities using exponential weighting
-    const entries = Object.entries(scores);
-    const maxScore = Math.max(...entries.map(e=>e[1]));
-    const weights = entries.map(([team, score]) => [team, Math.pow(maxScore / score, 3)]);
-    const totalWeight = weights.reduce((s,[,w])=>s+w, 0);
-    const oddsEntries = weights.map(([team, w]) => [team, Math.round(w / totalWeight * 1000) / 10]);
-    // Fix rounding to exactly 100
-    const total = oddsEntries.reduce((s,[,p])=>s+p, 0);
-    oddsEntries[0][1] = Math.round((oddsEntries[0][1] + (100 - total)) * 10) / 10;
-    const sorted = oddsEntries.sort((a,b)=>b[1]-a[1]);
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `<div class="card-header"><span class="card-label">Championship Probability</span><span class="card-label" style="opacity:.5">Based on Yahoo 2026 Rankings</span></div><div class="odds-list"></div>`;
-    const list = card.querySelector('.odds-list');
-    sorted.forEach(([team,pct],i) => {
-      const color = ROSTERS[team]?.color||'#64748b';
-      const isTop = i<3;
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
-      const row = document.createElement('div');
-      row.className = `odds-row${isTop?' top':''}`;
-      row.innerHTML = `
-        <span class="odds-rank">${medal}</span>
-        <span class="odds-swatch" style="background:${color}"></span>
+    const entries=Object.entries(scores);
+    const maxScore=Math.max(...entries.map(e=>e[1]));
+    const weights=entries.map(([team,score])=>[team,Math.pow(maxScore/score,3)]);
+    const totalWeight=weights.reduce((s,[,w])=>s+w,0);
+    const oddsEntries=weights.map(([team,w])=>[team,Math.round(w/totalWeight*1000)/10]);
+    const total=oddsEntries.reduce((s,[,p])=>s+p,0);
+    oddsEntries[0][1]=Math.round((oddsEntries[0][1]+(100-total))*10)/10;
+    const sorted=oddsEntries.sort((a,b)=>b[1]-a[1]);
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<div class="card-header"><span class="card-label">Championship Probability</span><span class="card-label" style="opacity:.5">Based on Yahoo 2026 Rankings</span></div><div class="odds-list"></div>`;
+    const list=card.querySelector('.odds-list');
+    sorted.forEach(([team,pct],i)=>{
+      const color=ROSTERS[team]?.color||'#64748b', isTop=i<3;
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+      const row=document.createElement('div'); row.className=`odds-row${isTop?' top':''}`;
+      row.innerHTML=`<span class="odds-rank">${medal}</span><span class="odds-swatch" style="background:${color}"></span>
         <span class="odds-name">${team}</span>
         <div class="odds-bar-track"><div class="odds-bar-fill" style="background:${color};width:0" data-w="${Math.min(pct*3.5,100)}"></div></div>
         <span class="odds-pct">${pct}%</span>`;
       list.appendChild(row);
     });
-    out.innerHTML = '';
-    out.appendChild(card);
-    requestAnimationFrame(()=>setTimeout(()=>{
-      out.querySelectorAll('.odds-bar-fill').forEach(el=>{el.style.width=el.dataset.w+'%';});
-    },80));
-  } catch(e) {
-    out.innerHTML=`<div class="error-card">Error: ${e.message}</div>`;
-  }
+    out.innerHTML=''; out.appendChild(card);
+    requestAnimationFrame(()=>setTimeout(()=>{out.querySelectorAll('.odds-bar-fill').forEach(el=>{el.style.width=el.dataset.w+'%';});},80));
+  } catch(e){out.innerHTML=`<div class="error-card">Error: ${e.message}</div>`;}
   btn.disabled=false; btn.textContent='↺ Regenerate';
 }
 
 // ── PREVIEWS ──────────────────────────────────────────────────────────────────
-const previewCache = {};
-let activeTeam = null;
-
-function selectTeam(name, btn) {
-  document.querySelectorAll('.chip').forEach(b=>{
-    b.classList.remove('active');
-    b.style.background=''; b.style.color='';
-  });
-  btn.classList.add('active');
-  btn.style.background = ROSTERS[name].color;
-  btn.style.color = '#13151c';
-  activeTeam = name;
-  renderPreview(name);
+const previewCache={};
+let activeTeam=null;
+function selectTeam(name,btn){
+  document.querySelectorAll('.chip').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='';});
+  btn.classList.add('active'); btn.style.background=ROSTERS[name].color; btn.style.color='#13151c';
+  activeTeam=name; renderPreview(name);
 }
-
-async function renderPreview(name) {
-  const out = document.getElementById('out-previews');
-  const color = ROSTERS[name]?.color||'#64748b';
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `
-    <div class="scout-header">
-      <div class="scout-name"><span class="scout-swatch" style="background:${color}"></span>${name}</div>
-      ${previewCache[name]?'<button class="btn btn-ghost" onclick="refreshPreview()" style="font-size:12px;padding:6px 12px">↺ Refresh</button>':''}
-    </div>
-    <div class="scout-body"><div class="preview-inner" style="padding:18px;font-size:14px;line-height:1.85;color:var(--text-2)"></div></div>`;
-  out.innerHTML = '';
-  out.appendChild(wrap);
-  const inner = out.querySelector('.preview-inner');
-  if (previewCache[name]) { inner.innerHTML = md(previewCache[name]); return; }
-  const players = (ROSTERS[name]?.players||[]).join(', ');
-  const result = await callClaude(
+async function renderPreview(name){
+  const out=document.getElementById('out-previews');
+  const color=ROSTERS[name]?.color||'#64748b';
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<div class="scout-header">
+    <div class="scout-name"><span class="scout-swatch" style="background:${color}"></span>${name}</div>
+    ${previewCache[name]?'<button class="btn btn-ghost" onclick="refreshPreview()" style="font-size:12px;padding:6px 12px">↺ Refresh</button>':''}
+  </div>
+  <div class="scout-body"><div class="preview-inner" style="padding:18px;font-size:14px;line-height:1.85;color:var(--text-2)"></div></div>`;
+  out.innerHTML=''; out.appendChild(wrap);
+  const inner=out.querySelector('.preview-inner');
+  if(previewCache[name]){inner.innerHTML=md(previewCache[name]);return;}
+  const players=(ROSTERS[name]?.players||[]).join(', ');
+  const result=await callClaude(
     `Write a 2026 preseason scouting report for Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nUse exactly these sections:\n## Overall Grade: [A+ through F — use the FULL scale. Only 2-3 teams deserve A range. Most teams are B or C. Weak rosters should get D or F.]\n## Offense (Grade: [A+ through F]): 2–3 sentences on which batting categories this team wins or loses, naming specific players\n## Pitching (Grade: [A+ through F]): 2–3 sentences on which pitching categories this team dominates or struggles in\n## Strengths: 3 bullet points naming specific players and the categories they help win\n## Weaknesses: 2 bullet points with specific category concerns\n## Sleeper to Watch: One breakout candidate with explanation\n## 2026 Outlook: One bold paragraph with a specific prediction\n\nBe opinionated, specific, and entertaining.`,
     inner, null, true
   );
-  previewCache[name] = result;
+  previewCache[name]=result;
 }
-
-function refreshPreview() {
-  if(activeTeam){delete previewCache[activeTeam]; renderPreview(activeTeam);}
-}
+function refreshPreview(){if(activeTeam){delete previewCache[activeTeam];renderPreview(activeTeam);}}
 
 // ── H2H ───────────────────────────────────────────────────────────────────────
-async function runH2H() {
-  const btn = document.getElementById('btn-h2h');
-  btn.dataset.label = '↺ Rematch';
-  const a = document.getElementById('sel-a').value;
-  const b = document.getElementById('sel-b').value;
+async function runH2H(){
+  const btn=document.getElementById('btn-h2h'); btn.dataset.label='↺ Rematch';
+  const a=document.getElementById('sel-a').value, b=document.getElementById('sel-b').value;
   if(a===b){alert('Pick two different teams!');return;}
-  const out = document.getElementById('out-h2h');
-  const ca = ROSTERS[a]?.color||'#64748b';
-  const cb = ROSTERS[b]?.color||'#64748b';
-  const banners = document.createElement('div');
-  banners.innerHTML = `<div class="matchup-banners">
+  const out=document.getElementById('out-h2h');
+  const ca=ROSTERS[a]?.color||'#64748b', cb=ROSTERS[b]?.color||'#64748b';
+  const banners=document.createElement('div');
+  banners.innerHTML=`<div class="matchup-banners">
     <div class="matchup-banner"><span class="matchup-dot" style="background:${ca}"></span><span class="matchup-name">${a}</span></div>
     <div class="matchup-banner"><span class="matchup-dot" style="background:${cb}"></span><span class="matchup-name">${b}</span></div>
   </div>`;
-  out.innerHTML = '';
-  out.appendChild(banners);
-  const resultDiv = document.createElement('div');
-  out.appendChild(resultDiv);
+  out.innerHTML=''; out.appendChild(banners);
+  const resultDiv=document.createElement('div'); out.appendChild(resultDiv);
   await callClaude(
     `Fantasy baseball head-to-head prediction: ${a} vs ${b} for 2026 Dynasty Heroes.\n\n${a}: ${(ROSTERS[a]?.players||[]).join(', ')}\n${b}: ${(ROSTERS[b]?.players||[]).join(', ')}\n\nThis league uses these exact scoring categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS\n\n## Category Breakdown\nFor each category pick a winner with a brief reason naming specific players:\n- **R:** winner — reason\n- **2B:** winner — reason\n- **3B:** winner — reason\n- **HR:** winner — reason\n- **RBI:** winner — reason\n- **SB:** winner — reason\n- **BB (batting):** winner — reason\n- **K (batting):** winner — reason\n- **AVG:** winner — reason\n- **OBP:** winner — reason\n- **SLG:** winner — reason\n- **W:** winner — reason\n- **L:** winner — reason (lower is better)\n- **SV:** winner — reason\n- **HR allowed:** winner — reason (lower is better)\n- **BB allowed:** winner — reason (lower is better)\n- **K (pitching):** winner — reason\n- **HLD:** winner — reason\n- **ERA:** winner — reason (lower is better)\n- **WHIP:** winner — reason (lower is better)\n- **K/9:** winner — reason\n- **QS:** winner — reason\n\n## Score\n${a}: X categories | ${b}: Y categories\n\n## Verdict\n2 sentences. Who wins and the decisive factor.\n\n## X-Factor\nOne player who could flip the result entirely.`,
     resultDiv, btn
@@ -1114,10 +717,9 @@ async function runH2H() {
 }
 
 // ── BOLD ──────────────────────────────────────────────────────────────────────
-async function runBold() {
-  const btn = document.getElementById('btn-bold');
-  btn.dataset.label = '↺ New Predictions';
-  const summary = TEAMS.map(n=>roster(n,27)).join('\n');
+async function runBold(){
+  const btn=document.getElementById('btn-bold'); btn.dataset.label='↺ New Predictions';
+  const summary=TEAMS.map(n=>roster(n,27)).join('\n');
   await callClaude(
     `You are a bold, fearless fantasy baseball analyst for Dynasty Heroes. Make exactly 8 BOLD predictions for 2026. Be specific, arguable, and entertaining.\n\nThis league scores: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG (batting) and W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS (pitching).\n\nROSTERS:\n${summary}\n\nFor each prediction use exactly this format:\n## 🎯 [Short punchy title]\n**The Call:** [1–2 specific sentences]\n**Why it happens:** [2–3 sentences with player names and specific categories]\n**Upset Factor:** [⚡ to ⚡⚡⚡⚡⚡] | **Confidence:** [Low/Medium/High]\n\nCover: biggest surprise team, biggest disappointment, a sleeper champion, a team collapse, a player who carries their team, dominant pitching staff, one specific stat prediction, and something about Good Wood (4-time dynasty champs).`,
     document.getElementById('out-bold'), btn, true, 3, 'llama-3.1-8b-instant'
