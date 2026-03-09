@@ -262,7 +262,7 @@ a { text-decoration: none; }
 }
 .card-body {
   padding: 18px 18px;
-  font-size: 14px; line-height: 1.85; color: var(--text-2);
+  font-size: 14px; line-height: 1.85; color: var(--text-1);
 }
 
 /* ─── MARKDOWN ────────────────────────────────── */
@@ -281,12 +281,12 @@ a { text-decoration: none; }
 }
 .card-body .bold { font-weight: 700; color: var(--text-1); }
 .card-body .li {
-  padding-left: 16px; color: var(--text-2); margin-bottom: 5px;
+  padding-left: 16px; color: var(--text-1); margin-bottom: 5px;
   position: relative;
 }
 .card-body .li::before { content: '›'; position: absolute; left: 4px; color: var(--cyan); font-weight: 700; }
 .card-body .num { color: var(--text-1); padding-left: 2px; margin-bottom: 7px; font-weight: 600; }
-.card-body .plain { color: var(--text-2); margin-bottom: 2px; }
+.card-body .plain { color: var(--text-1); margin-bottom: 2px; }
 .card-body .spacer { height: 10px; }
 
 /* ─── ACTION ROW ──────────────────────────────── */
@@ -546,9 +546,6 @@ select.field-sel option { background: var(--bg-raised); }
 
 <!-- TOP BAR -->
 <header class="topbar">
-  <a href="/" class="topbar-back">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </a>
   <div class="topbar-brand">
     <div class="topbar-logo">DH</div>
     <div>
@@ -863,7 +860,7 @@ async function runStandings() {
   btn.dataset.label = '↺ Regenerate';
   const summary = TEAMS.map(n=>roster(n,8)).join('\n');
   await callClaude(
-    `You are an expert fantasy baseball analyst. Analyze these ${TEAMS.length} Dynasty Heroes fantasy baseball rosters for the 2026 MLB season.\n\nPredict the final regular season standings in three tiers:\n# Championship Contenders (Predicted Finish: 1–6)\n# Playoff Bubble (Predicted Finish: 7–12)\n# Rebuilding / Long Shot (Predicted Finish: 13–18)\n\nWithin each tier rank the teams 1–6 (or equivalent). Give each a one-sentence reason referencing specific player names. Be opinionated and direct.\n\nROSTERS:\n${summary}`,
+    `You are an expert fantasy baseball analyst. Analyze these ${TEAMS.length} Dynasty Heroes fantasy baseball rosters for the 2026 MLB season.\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nPredict the final regular season standings in three tiers:\n# Championship Contenders (Predicted Finish: 1–6)\n# Playoff Bubble (Predicted Finish: 7–12)\n# Rebuilding / Long Shot (Predicted Finish: 13–18)\n\nWithin each tier rank the teams. Give each a one-sentence reason referencing specific player names and which categories they dominate or struggle in. Be opinionated and direct.\n\nROSTERS:\n${summary}`,
     document.getElementById('out-standings'), btn
   );
 }
@@ -954,7 +951,7 @@ async function renderPreview(name) {
   if (previewCache[name]) { inner.innerHTML = md(previewCache[name]); return; }
   const players = (ROSTERS[name]?.players||[]).join(', ');
   const result = await callClaude(
-    `Write a 2026 preseason scouting report for Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nUse exactly these sections:\n## Overall Grade: [A+ through D]\n## Offense (Grade: ?): 2–3 sentences on hitting, power, and run scoring\n## Pitching (Grade: ?): 2–3 sentences on SP depth, bullpen, ERA/WHIP potential\n## Strengths: 3 bullet points naming specific players\n## Weaknesses: 2 bullet points with specific concerns\n## Sleeper to Watch: One breakout candidate with explanation\n## 2026 Outlook: One bold paragraph with a specific prediction\n\nBe opinionated, specific, and entertaining.`,
+    `Write a 2026 preseason scouting report for Dynasty Heroes fantasy team "${name}".\nRoster: ${players}\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nUse exactly these sections:\n## Overall Grade: [A+ through D]\n## Offense (Grade: ?): 2–3 sentences on which batting categories this team wins or loses, naming specific players\n## Pitching (Grade: ?): 2–3 sentences on which pitching categories this team dominates or struggles in\n## Strengths: 3 bullet points naming specific players and the categories they help win\n## Weaknesses: 2 bullet points with specific category concerns\n## Sleeper to Watch: One breakout candidate with explanation\n## 2026 Outlook: One bold paragraph with a specific prediction\n\nBe opinionated, specific, and entertaining.`,
     inner, null, true
   );
   previewCache[name] = result;
@@ -984,7 +981,7 @@ async function runH2H() {
   const resultDiv = document.createElement('div');
   out.appendChild(resultDiv);
   await callClaude(
-    `Fantasy baseball head-to-head prediction: ${a} vs ${b} for 2026 Dynasty Heroes.\n\n${a}: ${(ROSTERS[a]?.players||[]).join(', ')}\n${b}: ${(ROSTERS[b]?.players||[]).join(', ')}\n\n## Category Breakdown\nPick a winner for each with a brief reason naming players:\n- **R (Runs):** winner — reason\n- **HR (Home Runs):** winner — reason\n- **RBI:** winner — reason\n- **SB (Stolen Bases):** winner — reason\n- **ERA:** winner — reason\n- **WHIP:** winner — reason\n- **K (Strikeouts):** winner — reason\n- **Saves:** winner — reason\n\n## Score\n${a}: X | ${b}: Y\n\n## Verdict\n2 sentences. Who wins and the decisive factor.\n\n## X-Factor\nOne player who could flip the result entirely.`,
+    `Fantasy baseball head-to-head prediction: ${a} vs ${b} for 2026 Dynasty Heroes.\n\n${a}: ${(ROSTERS[a]?.players||[]).join(', ')}\n${b}: ${(ROSTERS[b]?.players||[]).join(', ')}\n\nThis league uses these exact scoring categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS\n\n## Category Breakdown\nFor each category pick a winner with a brief reason naming specific players:\n- **R:** winner — reason\n- **2B:** winner — reason\n- **3B:** winner — reason\n- **HR:** winner — reason\n- **RBI:** winner — reason\n- **SB:** winner — reason\n- **BB (batting):** winner — reason\n- **K (batting):** winner — reason\n- **AVG:** winner — reason\n- **OBP:** winner — reason\n- **SLG:** winner — reason\n- **W:** winner — reason\n- **L:** winner — reason (lower is better)\n- **SV:** winner — reason\n- **HR allowed:** winner — reason (lower is better)\n- **BB allowed:** winner — reason (lower is better)\n- **K (pitching):** winner — reason\n- **HLD:** winner — reason\n- **ERA:** winner — reason (lower is better)\n- **WHIP:** winner — reason (lower is better)\n- **K/9:** winner — reason\n- **QS:** winner — reason\n\n## Score\n${a}: X categories | ${b}: Y categories\n\n## Verdict\n2 sentences. Who wins and the decisive factor.\n\n## X-Factor\nOne player who could flip the result entirely.`,
     resultDiv, btn
   );
 }
@@ -995,7 +992,7 @@ async function runBold() {
   btn.dataset.label = '↺ New Predictions';
   const summary = TEAMS.map(n=>roster(n,5)).join('\n');
   await callClaude(
-    `You are a bold, fearless fantasy baseball analyst for Dynasty Heroes. Make exactly 8 BOLD predictions for 2026. Be specific, arguable, and entertaining.\n\nROSTERS:\n${summary}\n\nFor each prediction use exactly this format:\n## 🎯 [Short punchy title]\n**The Call:** [1–2 specific sentences]\n**Why it happens:** [2–3 sentences with player names]\n**Upset Factor:** [⚡ to ⚡⚡⚡⚡⚡] | **Confidence:** [Low/Medium/High]\n\nCover: biggest surprise team, biggest disappointment, a sleeper champion, a team collapse, a player who carries their team, dominant pitching staff, one specific stat prediction, and something about Good Wood (4-time dynasty champs).`,
+    `You are a bold, fearless fantasy baseball analyst for Dynasty Heroes. Make exactly 8 BOLD predictions for 2026. Be specific, arguable, and entertaining.\n\nThis league scores: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG (batting) and W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS (pitching).\n\nROSTERS:\n${summary}\n\nFor each prediction use exactly this format:\n## 🎯 [Short punchy title]\n**The Call:** [1–2 specific sentences]\n**Why it happens:** [2–3 sentences with player names and specific categories]\n**Upset Factor:** [⚡ to ⚡⚡⚡⚡⚡] | **Confidence:** [Low/Medium/High]\n\nCover: biggest surprise team, biggest disappointment, a sleeper champion, a team collapse, a player who carries their team, dominant pitching staff, one specific stat prediction, and something about Good Wood (4-time dynasty champs).`,
     document.getElementById('out-bold'), btn
   );
 }
