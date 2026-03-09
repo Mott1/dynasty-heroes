@@ -6,11 +6,10 @@ const path = require('path');
 const redis = require('redis');
 const connectRedis = require('connect-redis');
 const RedisStore = connectRedis.default || connectRedis;
-
 const app = express();
 app.set('trust proxy', 1);
-const PORT = process.env.PORT || 3000;
 
+const PORT = process.env.PORT || 3000;
 const YAHOO_AUTH_URL = 'https://api.login.yahoo.com/oauth2/request_auth';
 const YAHOO_TOKEN_URL = 'https://api.login.yahoo.com/oauth2/get_token';
 const YAHOO_API_BASE = 'https://fantasysports.yahooapis.com/fantasy/v2';
@@ -22,7 +21,7 @@ const REQUIRED_ENV = ['YAHOO_CLIENT_ID', 'YAHOO_CLIENT_SECRET', 'YAHOO_REDIRECT_
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missing.length) { console.error('Missing env vars:', missing.join(', ')); process.exit(1); }
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ─── REDIS SESSION STORE ──────────────────────────────────────────────────────
@@ -36,11 +35,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  }
+  cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 
 function getBasicAuth() {
@@ -98,10 +93,7 @@ app.get('/auth/callback', async (req, res) => {
 });
 
 app.get('/auth/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
-
-app.get('/api/status', (req, res) => {
-  res.json({ authenticated: !!(req.session.tokens), myTeamId: MY_TEAM_ID, leagueId: LEAGUE_ID });
-});
+app.get('/api/status', (req, res) => { res.json({ authenticated: !!(req.session.tokens), myTeamId: MY_TEAM_ID, leagueId: LEAGUE_ID }); });
 
 // ─── ALL-TIME HISTORY ─────────────────────────────────────────────────────────
 app.get('/api/history', async (req, res) => {
@@ -122,7 +114,7 @@ app.get('/api/history', async (req, res) => {
         const league = leaguesData[j]?.league;
         if (!league) continue;
         const info = Array.isArray(league) ? league[0] : league;
-        if (info.name === 'Dynasty Heroes') { leagueKeys.push({ key: info.league_key, season: info.season || gameInfo.season }); }
+        if (info.name === 'Dynasty Heroes') leagueKeys.push({ key: info.league_key, season: info.season || gameInfo.season });
       }
     }
     if (leagueKeys.length === 0) return res.status(404).json({ error: 'No historical leagues found' });
@@ -294,19 +286,98 @@ app.get('/api/teams/:teamId/roster', async (req, res) => {
   } catch (err) { handleError(err, res); }
 });
 
-// ─── CLAUDE PROXY ─────────────────────────────────────────────────────────────
+// ─── AI PROXY (Claude Haiku — no rate limits) ─────────────────────────────────
+// Replaces the old /api/groq route. Uses your existing ANTHROPIC_API_KEY.
+// Claude Haiku is ~100x cheaper than GPT-4 and has no per-minute token caps.
+app.post('/api/groq', async (req, res) => {
+  if (!req.session?.tokens) return res.status(401).json({ error: 'Not authenticated' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
+
+  try {
+    const { messages, max_tokens, stream } = req.body;
+
+    // Separate system message from user messages (Claude API format)
+    const systemMsg = messages.find(m => m.role === 'system');
+    const userMessages = messages.filter(m => m.role !== 'system');
+
+    const payload = {
+      model: 'claude-haiku-4-5',
+      max_tokens: max_tokens || 4096,
+      system: systemMsg?.content || 'You are a helpful assistant.',
+      messages: userMessages,
+      stream: stream || false,
+    };
+
+    const claudeRes = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      payload,
+      {
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        responseType: stream ? 'stream' : 'json',
+      }
+    );
+
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+
+      // Translate Claude's SSE format → Groq-compatible SSE format
+      // so the existing frontend parsing code keeps working unchanged
+      claudeRes.data.on('data', chunk => {
+        const lines = chunk.toString().split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const evt = JSON.parse(raw);
+            // Claude sends content_block_delta events with the actual text
+            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+              const groqFormat = {
+                choices: [{ delta: { content: evt.delta.text } }]
+              };
+              res.write(`data: ${JSON.stringify(groqFormat)}\n\n`);
+            }
+            // Signal end of stream
+            if (evt.type === 'message_stop') {
+              res.write('data: [DONE]\n\n');
+            }
+          } catch {}
+        }
+      });
+      claudeRes.data.on('end', () => res.end());
+      claudeRes.data.on('error', () => res.end());
+
+    } else {
+      // Translate Claude's response format → Groq-compatible format
+      // so the existing frontend keeps working unchanged
+      const content = claudeRes.data.content?.[0]?.text || '';
+      res.json({
+        choices: [{ message: { role: 'assistant', content } }]
+      });
+    }
+
+  } catch (err) {
+    const status = err.response?.status || 500;
+    const msg = err.response?.data?.error?.message || err.message;
+    console.error('Claude API error:', status, msg);
+    res.status(status).json({ error: msg });
+  }
+});
+
+// ─── KEEP OLD /api/claude ROUTE TOO (unchanged) ───────────────────────────────
 app.post('/api/claude', async (req, res) => {
   if (!req.session.tokens) return res.status(401).json({ error: 'Not authenticated' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
   try {
-    const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
-      req.body,
-      {
-        headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        responseType: req.body.stream ? 'stream' : 'json',
-      }
-    );
+    const response = await axios.post('https://api.anthropic.com/v1/messages', req.body, {
+      headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      responseType: req.body.stream ? 'stream' : 'json',
+    });
     if (req.body.stream) {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -316,34 +387,6 @@ app.post('/api/claude', async (req, res) => {
     }
   } catch (err) {
     res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
-  }
-});
-
-// ─── GROQ PROXY ───────────────────────────────────────────────────────────────
-app.post('/api/groq', async (req, res) => {
-  if (!req.session?.tokens) return res.status(401).json({ error: 'Not authenticated' });
-  if (!process.env.GROQ_API_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
-  try {
-    const { model, max_tokens, stream, messages } = req.body;
-    const groqRes = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
-      { model, max_tokens, stream: stream || false, messages },
-      {
-        headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-        responseType: stream ? 'stream' : 'json',
-      }
-    );
-    if (stream) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      groqRes.data.pipe(res);
-    } else {
-      res.json(groqRes.data);
-    }
-  } catch (err) {
-    const status = err.response?.status || 500;
-    const msg = err.response?.data?.error?.message || err.message;
-    res.status(status).json({ error: msg });
   }
 });
 
