@@ -341,8 +341,9 @@ app.post('/api/groq', async (req, res) => {
       res.json(groqRes.data);
     }
   } catch (err) {
+    const status = err.response?.status || 500;
     const msg = err.response?.data?.error?.message || err.message;
-    res.status(500).json({ error: msg });
+    res.status(status).json({ error: msg });
   }
 });
 
