@@ -853,12 +853,12 @@ async function runOdds() {
   out.innerHTML = `<div class="thinking"><div class="spinner"></div> Calculating probabilities…</div>`;
   btn.disabled=true; btn.textContent='Calculating…';
   try {
-    const summary = TEAMS.map(n=>roster(n,6)).join('\n');
+    const summary = TEAMS.map(n=>roster(n,27)).join('\n');
     const res = await fetch('/api/groq', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'llama-3.3-70b-versatile', max_tokens:1024,
-        messages:[{role:'system',content:'You are a JSON API. You must respond with ONLY a valid JSON object and absolutely nothing else. No explanation, no markdown, no code fences, no preamble.'},{role:'user',content:`Return ONLY a JSON object assigning championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. The numbers must sum to exactly 100. Format: {"TeamName": number}\n\nROSTERS:\n${summary}`}]
+        messages:[{role:'system',content:'You are a JSON API. You must respond with ONLY a valid JSON object and absolutely nothing else. No explanation, no markdown, no code fences, no preamble.'},{role:'user',content:`Return ONLY a JSON object assigning championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. The numbers must sum to exactly 100. Carefully evaluate each team's FULL roster — stars matter but so do depth, weak spots, and injured players. Format: {"TeamName": number}\n\nFULL ROSTERS:\n${summary}`}]
       })
     });
     const data = await res.json();
