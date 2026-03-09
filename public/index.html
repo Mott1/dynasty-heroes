@@ -858,13 +858,18 @@ async function runOdds() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'llama-3.3-70b-versatile', max_tokens:1024,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:`Assign championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. Must sum to exactly 100. Return ONLY a JSON object, no markdown, no explanation:\n{"TeamName": number}\n\nROSTERS:\n${summary}`}]
+        messages:[{role:'system',content:'You are a JSON API. You must respond with ONLY a valid JSON object and absolutely nothing else. No explanation, no markdown, no code fences, no preamble.'},{role:'user',content:`Return ONLY a JSON object assigning championship win probability % to each of these ${TEAMS.length} Dynasty Heroes fantasy teams for 2026. The numbers must sum to exactly 100. Format: {"TeamName": number}\n\nROSTERS:\n${summary}`}]
       })
     });
     const data = await res.json();
-    const raw = (data.content.find(b => b.type === 'text')?.text || '').replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(raw);
+    // Groq uses OpenAI format: choices[0].message.content
+    let raw = (data.choices?.[0]?.message?.content || '').trim();
+    // Strip any markdown code fences Llama might add anyway
+    raw = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+    // Extract just the JSON object if there's surrounding text
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in response: ' + raw.slice(0,100));
+    const parsed = JSON.parse(jsonMatch[0]);
     const sorted = Object.entries(parsed).sort((a,b)=>b[1]-a[1]);
     const card = document.createElement('div');
     card.className = 'card';
