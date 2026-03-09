@@ -39,7 +39,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    maxAge: 30 * 24 * 60 * 60 * 1000
   }
 }));
 
@@ -92,11 +92,7 @@ app.get('/auth/callback', async (req, res) => {
     const r = await axios.post(YAHOO_TOKEN_URL, params.toString(), {
       headers: { 'Authorization': `Basic ${getBasicAuth()}`, 'Content-Type': 'application/x-www-form-urlencoded' }
     });
-    req.session.tokens = {
-      access_token: r.data.access_token,
-      refresh_token: r.data.refresh_token,
-      expires_at: Date.now() + (r.data.expires_in * 1000)
-    };
+    req.session.tokens = { access_token: r.data.access_token, refresh_token: r.data.refresh_token, expires_at: Date.now() + (r.data.expires_in * 1000) };
     res.redirect('/');
   } catch (e) { res.redirect('/?error=auth_failed'); }
 });
@@ -126,9 +122,7 @@ app.get('/api/history', async (req, res) => {
         const league = leaguesData[j]?.league;
         if (!league) continue;
         const info = Array.isArray(league) ? league[0] : league;
-        if (info.name === 'Dynasty Heroes') {
-          leagueKeys.push({ key: info.league_key, season: info.season || gameInfo.season });
-        }
+        if (info.name === 'Dynasty Heroes') { leagueKeys.push({ key: info.league_key, season: info.season || gameInfo.season }); }
       }
     }
     if (leagueKeys.length === 0) return res.status(404).json({ error: 'No historical leagues found' });
@@ -322,6 +316,33 @@ app.post('/api/claude', async (req, res) => {
     }
   } catch (err) {
     res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
+  }
+});
+
+// ─── GROQ PROXY ───────────────────────────────────────────────────────────────
+app.post('/api/groq', async (req, res) => {
+  if (!req.session?.tokens) return res.status(401).json({ error: 'Not authenticated' });
+  if (!process.env.GROQ_API_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
+  try {
+    const { model, max_tokens, stream, messages } = req.body;
+    const groqRes = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      { model, max_tokens, stream: stream || false, messages },
+      {
+        headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+        responseType: stream ? 'stream' : 'json',
+      }
+    );
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      groqRes.data.pipe(res);
+    } else {
+      res.json(groqRes.data);
+    }
+  } catch (err) {
+    const msg = err.response?.data?.error?.message || err.message;
+    res.status(500).json({ error: msg });
   }
 });
 
