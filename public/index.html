@@ -859,11 +859,106 @@ function roster(name, n=8) {
 async function runStandings() {
   const btn = document.getElementById('btn-standings');
   btn.dataset.label = '↺ Regenerate';
-  const summary = TEAMS.map(n=>roster(n,27)).join('\n');
-  await callClaude(
-    `You are an expert fantasy baseball analyst. Analyze these ${TEAMS.length} Dynasty Heroes fantasy baseball rosters for the 2026 MLB season.\n\nThis league scores these exact categories:\nBATTING: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG\nPITCHING: W, L, SV, HR allowed, BB allowed, K, HLD, ERA, WHIP, K/9, QS\n\nPredict the final regular season standings in three tiers:\n# Championship Contenders (Predicted Finish: 1–6)\n# Playoff Bubble (Predicted Finish: 7–12)\n# Rebuilding / Long Shot (Predicted Finish: 13–18)\n\nWithin each tier rank the teams. Give each a one-sentence reason referencing specific player names and which categories they dominate or struggle in. Be opinionated and direct.\n\nROSTERS:\n${summary}`,
-    document.getElementById('out-standings'), btn, true, 3, 'llama-3.1-8b-instant'
-  );
+  const out = document.getElementById('out-standings');
+  out.innerHTML = `<div class="thinking"><div class="spinner"></div> Loading Yahoo 2026 rankings…</div>`;
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  try {
+    // Step 1: fetch Yahoo rank scores (same logic as Odds tab)
+    const rankMap = {};
+    for(let start=0; start<500; start+=25) {
+      const r = await fetch(`/api/raw?path=/league/mlb.l.10514/players;status=T;sort=AR;start=${start};count=25;out=ranks`);
+      const d = await r.json();
+      const players = d?.fantasy_content?.league?.[1]?.players;
+      const count = players?.count || 0;
+      if(count === 0) break;
+      for(let i=0;i<count;i++){
+        const p = players[i]?.player;
+        if(!p) continue;
+        const info = Array.isArray(p[0]) ? p[0] : [];
+        const name = info.find(x=>x?.name)?.name?.full;
+        if(!name) continue;
+        const rankList = p[1]?.player_ranks || [];
+        const rank2026 = rankList.find(r=>r?.player_rank?.rank_type==='S' && r?.player_rank?.rank_season==='2026')?.player_rank?.rank_value;
+        const rankOR = rankList.find(r=>r?.player_rank?.rank_type==='OR')?.player_rank?.rank_value;
+        const rank = parseInt(rank2026) || parseInt(rankOR) || 9999;
+        rankMap[name.toLowerCase()] = rank;
+        rankMap[name.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] = rank;
+      }
+      if(count < 25) break;
+    }
+
+    // Step 2: score each team (sum of top-14 ranks, lower = better)
+    const scores = {};
+    for(const teamName of TEAMS) {
+      const players = ROSTERS[teamName]?.players || [];
+      const playerRanks = players.map(p => rankMap[p.replace(/\s*\(.*?\)/,'').trim().toLowerCase()] || 600);
+      playerRanks.sort((a,b)=>a-b);
+      scores[teamName] = playerRanks.slice(0,14).reduce((s,r)=>s+r, 0);
+    }
+
+    // Step 3: sort teams by score ascending (lower = better)
+    const sorted = Object.entries(scores).sort((a,b)=>a[1]-b[1]);
+    const contenders = sorted.slice(0,6);
+    const bubble = sorted.slice(6,12);
+    const rebuilding = sorted.slice(12);
+
+    // Step 4: small AI prompt — just write one punchy sentence per team
+    // Include only top-5 players per team to keep tokens low
+    const teamLines = sorted.map(([name],i) => `${i+1}. ${name}: ${(ROSTERS[name]?.players||[]).slice(0,5).join(', ')}`).join('\n');
+    out.innerHTML = `<div class="thinking"><div class="spinner"></div> Writing analysis…</div>`;
+
+    const result = await callClaude(
+      `These 18 Dynasty Heroes fantasy teams are already ranked 1-18 by Yahoo's official 2026 preseason player rankings. Do NOT re-order them. Just write one sharp, opinionated sentence for each team explaining why they land where they do. Reference specific player names. League scores: R, 2B, 3B, HR, RBI, SB, BB, K, AVG, OBP, SLG / W, L, SV, HR, BB, K, HLD, ERA, WHIP, K/9, QS.\n\nFormat each line as: [rank]. [Team]: [one sentence]\n\n${teamLines}`,
+      out, btn, false, 3, 'llama-3.3-70b-versatile'
+    );
+
+    if (!result) return;
+
+    // Step 5: render tiered standings card
+    const lineMap = {};
+    result.split('\n').forEach(line => {
+      const m = line.match(/^(\d+)\.\s*(.+?):\s*(.+)/);
+      if(m) lineMap[m[2].trim()] = m[3].trim();
+    });
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<div class="card-header"><span class="card-label">Predicted Standings</span><span class="card-label" style="opacity:.5">Yahoo 2026 Rankings</span></div><div class="card-body" style="padding:0"></div>`;
+    const body = card.querySelector('.card-body');
+
+    const renderTier = (label, teams, startRank) => {
+      const section = document.createElement('div');
+      section.style.cssText = 'padding:14px 18px 8px';
+      section.innerHTML = `<div class="h1" style="margin:0 0 10px">${label}</div>`;
+      teams.forEach(([name, score], i) => {
+        const color = ROSTERS[name]?.color || '#64748b';
+        const rank = startRank + i;
+        const blurb = lineMap[name] || '';
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin-bottom:12px';
+        row.innerHTML = `
+          <span style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--text-3);min-width:22px;padding-top:2px">#${rank}</span>
+          <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px"></span>
+          <div>
+            <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--text-1)">${name}</div>
+            <div style="font-size:13px;color:var(--text-2);line-height:1.5">${blurb}</div>
+          </div>`;
+        section.appendChild(row);
+      });
+      body.appendChild(section);
+    };
+
+    renderTier('🏆 Championship Contenders', contenders, 1);
+    renderTier('⚔️ Playoff Bubble', bubble, 7);
+    renderTier('🔧 Rebuilding', rebuilding, 13);
+
+    out.innerHTML = '';
+    out.appendChild(card);
+  } catch(e) {
+    out.innerHTML = `<div class="error-card">Error: ${e.message}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '↺ Regenerate';
 }
 
 // ── ODDS ──────────────────────────────────────────────────────────────────────
